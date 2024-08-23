@@ -10,6 +10,11 @@ d6 <- pivot_longer(roc6, cols = OLD_3new:NEW_3old, names_sep = "_",
     status = factor(status, levels = c("OLD", "NEW")), 
     response = factor(response, levels = c("3new", "2new", "1new", 
                                            "1old", "2old", "3old")))
+levels(d6$response) <- paste0("r", levels(d6$response))
+d6 <- d6 %>% 
+  pivot_wider(names_from = response, values_from = value) %>% 
+  mutate(statusnum = as.numeric(status))
+
 d6
 
 data("roc8", package = "MPTinR")
