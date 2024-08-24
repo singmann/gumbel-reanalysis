@@ -91,6 +91,88 @@ for (i in seq_along(dataset6)) {
 #          prior = gumbel_priors)
 
 
-roc6_loo_gumbel <- lapply(roc6_fits, loo)
-roc6_waic_gumbel <- lapply(roc6_fits, waic)
+roc6_loo_gumbel <- lapply(roc6_fits_gumbel, loo)
+roc6_waic_gumbel <- lapply(roc6_fits_gumbel, waic)
+
+roc6_loo_uvsdt <- lapply(roc6_fits_uvsdt, loo)
+roc6_waic_uvsdt <- lapply(roc6_fits_uvsdt, waic)
+
+for (i in seq_along(roc6_loo_gumbel)) {
+  attr(roc6_loo_gumbel[[i]], "model_name") <- "gumbel"
+  attr(roc6_waic_gumbel[[i]], "model_name") <- "gumbel"
+  
+  attr(roc6_loo_uvsdt[[i]], "model_name") <- "uvsdt"
+  attr(roc6_waic_uvsdt[[i]], "model_name") <- "uvsdt"
+  
+}
+
+waic_comp <- mapply(loo_compare, roc6_waic_gumbel, roc6_waic_uvsdt, SIMPLIFY = FALSE)
+loo_comp <- mapply(loo_compare, roc6_loo_gumbel, roc6_loo_uvsdt, SIMPLIFY = FALSE)
+
+str(roc6_waic_gumbel[[1]])
+
+roc6_waic_gumbel[[1]]$estimates["waic","Estimate"]
+
+#mod_comp <- 
+tibble(
+  dataset = dataset6,
+  waic_g = map_dbl(roc6_waic_gumbel, ~.$estimates["waic","Estimate"]),
+  waic_uv = map_dbl(roc6_waic_uvsdt, ~.$estimates["waic","Estimate"]),
+) %>% 
+  mutate(min_waic = pmin(waic_g, waic_uv)) %>% 
+  mutate(across(c(waic_g, waic_uv), ~ format(.-min_waic, digits = 2, format = "g"))) %>% 
+  mutate(waic_diff_sig = map_lgl(waic_comp, ~ abs(.[2, "elpd_diff"]) > (2*.[2, "se_diff"])))
+
+tibble(
+  dataset = dataset6,
+  looic_g = map_dbl(roc6_loo_gumbel, ~.$estimates["looic","Estimate"]),
+  looic_uv = map_dbl(roc6_loo_uvsdt, ~.$estimates["looic","Estimate"]),
+) %>% 
+  mutate(min_waic = pmin(looic_g, looic_uv)) %>% 
+  mutate(across(c(looic_g, looic_uv), ~ format(.-min_waic, digits = 2, format = "g"))) %>% 
+  mutate(waic_diff_sig = map_lgl(loo_comp, ~ abs(.[2, "elpd_diff"]) > (2*.[2, "se_diff"])))
+
+## plots
+plot_data <- roc6 %>% 
+  group_by(exp) %>% 
+  summarise(across(c(OLD_3new:NEW_3old), sum)) %>% 
+  pivot_longer(-exp, names_to = c("status", "response"), names_sep = "_") %>% 
+  group_by(exp, status) %>% 
+  mutate(observed = value / sum(value)) %>% 
+   mutate(
+    status = factor(status, levels = c("OLD", "NEW")), 
+    response = factor(response, levels = c("3new", "2new", "1new", 
+                                           "1old", "2old", "3old")))
+  
+pred_gumbel <- lapply(roc6_fits_gumbel, posterior_epred)
+pred_uvsdt <- lapply(roc6_fits_uvsdt, posterior_epred)
+
+plot_data$gumbel <- unlist(map(pred_gumbel, ~apply(., c(3), mean)))
+plot_data$uvsd <- unlist(map(pred_uvsdt, ~apply(., c(3), mean)))
+
+str(apply(pred_gumbel[[1]], c(3), mean))
+str(pred_gumbel)
+
+plot_data %>% 
+  select(-value) %>% 
+  pivot_wider(names_from = status, values_from = c(observed, gumbel, uvsd)) %>% 
+  arrange(exp, desc(response)) %>% 
+  mutate(across(-c(response), cumsum)) %>% 
+  filter(response != "3new") %>% 
+  ggplot(aes(x =  observed_NEW, y = observed_OLD)) +
+  geom_abline(slope = 1, intercept = 0) +
+  geom_line(aes(group = 1)) +
+  geom_point() +
+  geom_point(aes(x = gumbel_NEW, y = gumbel_OLD), shape = 3, colour = "blue") +
+  geom_point(aes(x = uvsd_NEW, y = uvsd_OLD), shape = 2, colour = "red") + 
+  coord_fixed(xlim = c(0, 1), ylim = c(0, 1)) +
+  facet_wrap(vars(exp))
+  
+  geom_linerange(aes(x = model_new, y = model_old, ymin = lower_old, ymax = upper_old), 
+                 colour = "grey") +
+  geom_linerange(aes(x = model_new, y = model_old, xmin = lower_new, xmax = upper_new), 
+                 colour = "grey") +
+  
+  coord_fixed(xlim = c(0, 1), ylim = c(0, 1)) +
+  ggtitle("uvsd fit")
 
