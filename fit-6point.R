@@ -150,8 +150,23 @@ pred_uvsdt <- lapply(roc6_fits_uvsdt, posterior_epred)
 plot_data$gumbel <- unlist(map(pred_gumbel, ~apply(., c(3), mean)))
 plot_data$uvsd <- unlist(map(pred_uvsdt, ~apply(., c(3), mean)))
 
-str(apply(pred_gumbel[[1]], c(3), mean))
-str(pred_gumbel)
+plot_data2 <- plot_data
+plot_data2$gumbel_low <- unlist(map(pred_gumbel, 
+                                   ~apply(apply(., c(1, 3), mean), 
+                                          2, quantile, probs = 0.025)))
+plot_data2$gumbel_high <- unlist(map(pred_gumbel, 
+                                    ~apply(apply(., c(1, 3), mean), 
+                                           2, quantile, probs = 0.975)))
+
+plot_data2$uvsd_low <- unlist(map(pred_uvsdt, 
+                                   ~apply(apply(., c(1, 3), mean), 
+                                          2, quantile, probs = 0.025)))
+plot_data2$uvsd_high <- unlist(map(pred_uvsdt, 
+                                    ~apply(apply(., c(1, 3), mean), 
+                                           2, quantile, probs = 0.975)))
+
+# str(apply(pred_gumbel[[1]], c(1, 3), mean))
+# str(pred_gumbel)
 
 plot_data %>% 
   select(-value) %>% 
@@ -167,12 +182,27 @@ plot_data %>%
   geom_point(aes(x = uvsd_NEW, y = uvsd_OLD), shape = 2, colour = "red") + 
   coord_fixed(xlim = c(0, 1), ylim = c(0, 1)) +
   facet_wrap(vars(exp))
-  
-  geom_linerange(aes(x = model_new, y = model_old, ymin = lower_old, ymax = upper_old), 
-                 colour = "grey") +
-  geom_linerange(aes(x = model_new, y = model_old, xmin = lower_new, xmax = upper_new), 
-                 colour = "grey") +
-  
+
+
+plot_data2 %>% 
+  select(-value) %>% 
+  pivot_wider(names_from = status, values_from = c(observed, gumbel, uvsd, 
+                                                   gumbel_low, gumbel_high, 
+                                                   uvsd_low, uvsd_high)) %>% 
+  arrange(exp, desc(response)) %>% 
+  mutate(across(-c(response), cumsum)) %>% 
+  filter(response != "3new") %>% 
+  ggplot(aes(x =  observed_NEW, y = observed_OLD)) +
+  geom_abline(slope = 1, intercept = 0) +
+   
+    geom_linerange(aes(x = uvsd_NEW, y = uvsd_OLD, ymin = uvsd_low_OLD, ymax = uvsd_high_OLD), colour = "red") +
+   geom_linerange(aes(x = uvsd_NEW, y = uvsd_OLD, xmin = uvsd_low_NEW, xmax = uvsd_high_NEW), colour = "red") +
+  geom_linerange(aes(x = gumbel_NEW, y = gumbel_OLD, ymin = gumbel_low_OLD, ymax = gumbel_high_OLD), colour = "blue") +
+   geom_linerange(aes(x = gumbel_NEW, y = gumbel_OLD, xmin = gumbel_low_NEW, xmax = gumbel_high_NEW), colour = "blue") +
+  geom_line(aes(group = 1)) +
+  geom_point() +
+  geom_point(aes(x = uvsd_NEW, y = uvsd_OLD), shape = 2, colour = "red") +
+  geom_point(aes(x = gumbel_NEW, y = gumbel_OLD), shape = 4, colour = "blue") +
   coord_fixed(xlim = c(0, 1), ylim = c(0, 1)) +
-  ggtitle("uvsd fit")
+  facet_wrap(vars(exp))
 
