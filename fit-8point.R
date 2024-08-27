@@ -13,6 +13,49 @@ head(roc8)
 
 dataset8 <- levels(roc8$exp)
 
+all_perf <- roc8 %>% 
+  mutate(
+    hit = rowSums(select(., OLD_1old:OLD_4old)) /
+           rowSums(select(., OLD_4new:OLD_4old)),
+    fa = rowSums(select(., NEW_1old:NEW_4old)) /
+           rowSums(select(., NEW_4new:NEW_4old))
+  ) %>% 
+  mutate(
+    acc = (hit + (1-fa)) / 2
+  ) %>% 
+  mutate(
+    empty = rowSums(select(., OLD_4new:NEW_4old) == 0)
+  )
+
+all_perf %>% 
+  filter(exp == dataset8[1]) %>% 
+  arrange(desc(empty))
+
+all_perf %>% 
+  filter(exp == dataset8[1]) %>% 
+  arrange(desc(fa))
+
+all_perf %>% 
+  filter(exp == dataset8[1]) %>% 
+  arrange(hit)
+
+all_perf %>% 
+  filter(exp == dataset8[1]) %>% 
+  arrange(desc(acc))
+
+all_perf %>% 
+  filter(exp == dataset8[1]) %>% 
+  arrange(acc)
+
+low_perf <- all_perf %>% 
+  filter(exp == dataset8[1]) %>% 
+  filter(acc < .59)
+  #filter(acc < .65 | empty > 6)
+  #filter(empty > 6)
+
+roc8_use <- roc8 %>% 
+  filter(!(id %in% low_perf$id))
+
 gumbel_formula_8 <- brmsformula(
   OLD_3new ~ 1 + (1|p|id), 
   crc ~ (1|p|id), 
@@ -60,7 +103,7 @@ roc8_fits_uvsdt <- vector("list", length(dataset8))
 #i <- 1
 for (i in seq_along(dataset8)) {
   print(i)
-  roc8_data[[i]] <- roc8 %>% 
+  roc8_data[[i]] <- roc8_use %>% 
     filter(exp == dataset8[i])
   roc8_oldmat[[i]] <- roc8_data[[i]] %>% 
                                   select(OLD_4new:OLD_4old) %>% 
@@ -79,14 +122,14 @@ for (i in seq_along(dataset8)) {
     gumbel_formula_8, data = roc8_data[[i]], 
     stanvars = sv_gumbel8agg + roc8_sv[[i]], 
     prior = gumbel_priors_8,
-    init_r = 0.5, control = list(adapt_delta = 0.99)
+    init_r = 0.25, control = list(adapt_delta = 0.9999)
   )
   
   roc8_fits_uvsdt[[i]] <- brm(
     uvsdt_formula_8, data = roc8_data[[i]], 
     stanvars = sv_uvsdt8agg + roc8_sv[[i]], 
     prior = uvsdt_priors_8,
-    init_r = 0.5, control = list(adapt_delta = 0.99)
+    init_r = 0.5, control = list(adapt_delta = 0.9999)
   )
 }
 
@@ -97,11 +140,11 @@ for (i in seq_along(dataset8)) {
 
 ## exclude data set 1 which sows problems
 
-roc8_loo_gumbel <- lapply(roc8_fits_gumbel[-1], loo)
-roc8_waic_gumbel <- lapply(roc8_fits_gumbel[-1], waic)
+roc8_loo_gumbel <- lapply(roc8_fits_gumbel, loo)
+roc8_waic_gumbel <- lapply(roc8_fits_gumbel, waic)
 
-roc8_loo_uvsdt <- lapply(roc8_fits_uvsdt[-1], loo)
-roc8_waic_uvsdt <- lapply(roc8_fits_uvsdt[-1], waic)
+roc8_loo_uvsdt <- lapply(roc8_fits_uvsdt, loo)
+roc8_waic_uvsdt <- lapply(roc8_fits_uvsdt, waic)
 
 for (i in seq_along(roc8_loo_gumbel)) {
   attr(roc8_loo_gumbel[[i]], "model_name") <- "gumbel"
