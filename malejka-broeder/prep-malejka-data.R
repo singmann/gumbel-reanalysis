@@ -32,9 +32,9 @@ mbe2 <- e2 %>%
   pivot_wider(names_from = c(Stimulus, Response), values_from = n)
   
 
-e2 <- read_csv("Malejka&Bröder_Data_Exp2.csv")
+e3 <- read_csv("Malejka&Bröder_Data_Exp3.csv")
 
-mbe3 <- e2 %>% 
+mbe3 <- e3 %>% 
   group_by(Subject, BaseRate, Stimulus) %>% 
   count(Response) %>% 
   mutate(
@@ -46,5 +46,21 @@ mbe3 <- e2 %>%
   ) %>% 
   arrange(Stimulus, Response) %>% 
   pivot_wider(names_from = c(Stimulus, Response), values_from = n)
+
+mbe1 <- mbe1 %>% 
+  mutate(Nold = OLD_new + OLD_old,
+         Nnew = NEW_new + NEW_old) %>% 
+  mutate(experiment = "e1")
+
+mbe2 <- mbe2 %>% 
+  mutate(Nold = OLD_new + OLD_old,
+         Nnew = NEW_new + NEW_old) %>% 
+  mutate(experiment = "e2")
+
+mbe3 <- mbe3 %>% 
+  mutate(Nold = OLD_new + OLD_old,
+         Nnew = NEW_new + NEW_old) %>% 
+  mutate(experiment = "e3")
+all_dat <- bind_rows(mbe1, mbe2, mbe3)
 
 save(mbe1, mbe2, mbe3, file = "../malejka-broeder.rda")
