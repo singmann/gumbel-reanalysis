@@ -63,4 +63,4 @@ mbe3 <- mbe3 %>%
   mutate(experiment = "e3")
 all_dat <- bind_rows(mbe1, mbe2, mbe3)
 
-save(mbe1, mbe2, mbe3, file = "../malejka-broeder.rda")
+save(mbe1, mbe2, mbe3, all_dat, file = "../malejka-broeder.rda")
