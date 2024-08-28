@@ -5,9 +5,10 @@ uvsdtbin_stanvars <- "
 
     real pold;
     real pnew;
+    real disc = 1/discsignal;
 
     // calculate probabilities
-    pold = 1 - Phi(discsignal * (cr - mu));
+    pold = 1 - Phi(disc * (cr - mu));
     pnew = 1 - Phi(cr);
     
     return binomial_lpmf(y | Nold, pold) + binomial_lpmf(ynew | Nnew, pnew);
@@ -24,7 +25,7 @@ sv_uvsdtbin <- stanvar(scode = uvsdtbin_stanvars, block = "functions")
 
 calc_posterior_predictions_uvsdtbin <- function(i, prep) {
   mu <- brms::get_dpar(prep, "mu", i = i)
-  discsignal <- brms::get_dpar(prep, "discsignal", i = i)
+  discsignal <- 1/brms::get_dpar(prep, "discsignal", i = i)
   cr <- brms::get_dpar(prep, "cr", i = i)
 
   OUTLEN <- length(mu)
