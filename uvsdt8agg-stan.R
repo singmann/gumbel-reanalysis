@@ -4,6 +4,7 @@ uvsdt8agg_stanvars <- "
                     real crhm, real crhh, real crhx,
                     array[] int oldvec, array[] int newvec) {
   int nthres = 7;
+  real disc = 1/discsignal;
   vector[nthres+1] pold;
   vector[nthres+1] pnew;
   
@@ -19,11 +20,11 @@ uvsdt8agg_stanvars <- "
   thres[7] = crc + (exp(crhm) + exp(crhh) + exp(crhx));
    
   // calculate probabilities
-  pold[1] = Phi(discsignal * (thres[1] - mu));
+  pold[1] = Phi(disc * (thres[1] - mu));
   for (i in 2:nthres) {
-    pold[i] = Phi(discsignal * (thres[i] - mu)) - Phi(discsignal * (thres[i - 1] - mu));
+    pold[i] = Phi(disc * (thres[i] - mu)) - Phi(disc * (thres[i - 1] - mu));
   }
-  pold[nthres+1] = 1 - Phi(discsignal * (thres[nthres] - mu));
+  pold[nthres+1] = 1 - Phi(disc * (thres[nthres] - mu));
   
   pnew[1] = Phi((thres[1]));
   for (i in 2:nthres) {
@@ -44,7 +45,7 @@ sv_uvsdt8agg <- stanvar(scode = uvsdt8agg_stanvars, block = "functions")
 
 calc_posterior_predictions_uvsdt8agg <- function(i, prep) {
   mu <- brms::get_dpar(prep, "mu", i = i)
-  discsignal <- brms::get_dpar(prep, "discsignal", i = i)
+  discsignal <- 1/brms::get_dpar(prep, "discsignal", i = i)
   crc <- brms::get_dpar(prep, "crc", i = i)
   crlm <- brms::get_dpar(prep, "crlm", i = i)
   crll <- brms::get_dpar(prep, "crll", i = i)

@@ -31,25 +31,25 @@ all_perf %>%
   filter(exp == dataset8[1]) %>% 
   arrange(desc(empty))
 
-all_perf %>% 
-  filter(exp == dataset8[1]) %>% 
-  arrange(desc(fa))
-
-all_perf %>% 
-  filter(exp == dataset8[1]) %>% 
-  arrange(hit)
-
-all_perf %>% 
-  filter(exp == dataset8[1]) %>% 
-  arrange(desc(acc))
-
-all_perf %>% 
-  filter(exp == dataset8[1]) %>% 
-  arrange(acc)
+# all_perf %>% 
+#   filter(exp == dataset8[1]) %>% 
+#   arrange(desc(fa))
+# 
+# all_perf %>% 
+#   filter(exp == dataset8[1]) %>% 
+#   arrange(hit)
+# 
+# all_perf %>% 
+#   filter(exp == dataset8[1]) %>% 
+#   arrange(desc(acc))
+# 
+# all_perf %>% 
+#   filter(exp == dataset8[1]) %>% 
+#   arrange(acc)
 
 low_perf <- all_perf %>% 
   filter(exp == dataset8[1]) %>% 
-  filter(acc < .59)
+  filter(acc < .59) ## select only significant above chance
   #filter(acc < .65 | empty > 6)
   #filter(empty > 6)
 
@@ -71,7 +71,7 @@ gumbel_priors_8 <- prior(normal(0,0.5), class = Intercept, dpar = "crc") +
   prior(normal(-0.5,0.5), class = Intercept, dpar = "crhm") +
   prior(normal(-0.5,0.5), class = Intercept, dpar = "crhh") +
   prior(normal(-0.5,0.5), class = Intercept, dpar = "crhx") +
-  prior(student_t(3, -1, 2), class = Intercept)
+  prior(student_t(3, 1, 2), class = Intercept)
 
 uvsdt_formula_8 <- brmsformula(
   OLD_3new ~ 1 + (1|p|id), 
@@ -164,26 +164,41 @@ roc8_waic_gumbel[[1]]$estimates["waic","Estimate"]
 
 #mod_comp <- 
 tibble(
-  dataset = dataset8[-1],
+  dataset = dataset8,
   waic_g = map_dbl(roc8_waic_gumbel, ~.$estimates["waic","Estimate"]),
   waic_uv = map_dbl(roc8_waic_uvsdt, ~.$estimates["waic","Estimate"]),
 ) %>% 
   mutate(min_waic = pmin(waic_g, waic_uv)) %>% 
   mutate(across(c(waic_g, waic_uv), ~ format(.-min_waic, digits = 2, format = "g"))) %>% 
+  mutate(waic_SE = map_dbl(waic_comp, ~ .[2, "se_diff"])) %>% 
   mutate(waic_diff_sig = map_lgl(waic_comp, ~ abs(.[2, "elpd_diff"]) > (2*.[2, "se_diff"])))
+# # A tibble: 3 × 6
+#   dataset           waic_g waic_uv min_waic waic_SE waic_diff_sig
+#   <chr>             <chr>  <chr>      <dbl>   <dbl> <lgl>        
+# 1 Benjamin_2013     "  0"  " 2.3"     6251.    8.05 FALSE        
+# 2 Onyper_2010-Pics  "  0"  "72.9"    12418.   16.9  TRUE         
+# 3 Onyper_2010-Words "107"  " 0.0"    11885.   31.3  FALSE    
 
 tibble(
-  dataset = dataset8[-1],
+  dataset = dataset8,
   looic_g = map_dbl(roc8_loo_gumbel, ~.$estimates["looic","Estimate"]),
   looic_uv = map_dbl(roc8_loo_uvsdt, ~.$estimates["looic","Estimate"]),
 ) %>% 
   mutate(min_waic = pmin(looic_g, looic_uv)) %>% 
   mutate(across(c(looic_g, looic_uv), ~ format(.-min_waic, digits = 2, format = "g"))) %>% 
-  mutate(waic_diff_sig = map_lgl(loo_comp, ~ abs(.[2, "elpd_diff"]) > (2*.[2, "se_diff"])))
+  mutate(looic_SE = map_dbl(loo_comp, ~ .[2, "se_diff"])) %>% 
+  mutate(looic_diff_sig = map_lgl(loo_comp, ~ abs(.[2, "elpd_diff"]) > (2*.[2, "se_diff"])))
+# # A tibble: 3 × 6
+#   dataset           looic_g looic_uv min_waic looic_SE looic_diff_sig
+#   <chr>             <chr>   <chr>       <dbl>    <dbl> <lgl>         
+# 1 Benjamin_2013     " 5.6"  " 0"        6441.     10.4 FALSE         
+# 2 Onyper_2010-Pics  " 0.0"  "53"       12724.     19.2 FALSE         
+# 3 Onyper_2010-Words "87.5"  " 0"       12174.     32.2 FALSE
+
 
 ## plots
 plot_data <- roc8 %>% 
-  filter(exp != dataset8[1]) %>% 
+  #filter(exp != dataset8[1]) %>% 
   group_by(exp) %>% 
   summarise(across(c(OLD_4new:NEW_4old), sum)) %>% 
   pivot_longer(-exp, names_to = c("status", "response"), names_sep = "_") %>% 
@@ -194,8 +209,8 @@ plot_data <- roc8 %>%
     response = factor(response, levels = c("4new", "3new", "2new", "1new", 
                                            "1old", "2old", "3old", "4old")))
   
-pred_gumbel <- lapply(roc8_fits_gumbel[-1], posterior_epred)
-pred_uvsdt <- lapply(roc8_fits_uvsdt[-1], posterior_epred)
+pred_gumbel <- lapply(roc8_fits_gumbel, posterior_epred)
+pred_uvsdt <- lapply(roc8_fits_uvsdt, posterior_epred)
 
 plot_data$gumbel <- unlist(map(pred_gumbel, ~apply(., c(3), mean)))
 plot_data$uvsd <- unlist(map(pred_uvsdt, ~apply(., c(3), mean)))
@@ -218,6 +233,9 @@ plot_data2$uvsd_high <- unlist(map(pred_uvsdt,
 # str(apply(pred_gumbel[[1]], c(1, 3), mean))
 # str(pred_gumbel)
 
+psize <- 3.5
+lsize <- 1.5
+
 plot_data %>% 
   select(-value) %>% 
   pivot_wider(names_from = status, values_from = c(observed, gumbel, uvsd)) %>% 
@@ -226,14 +244,22 @@ plot_data %>%
   filter(response != "4new") %>% 
   ggplot(aes(x =  observed_NEW, y = observed_OLD)) +
   geom_abline(slope = 1, intercept = 0) +
-  geom_line(aes(group = 1)) +
-  geom_point() +
-  geom_point(aes(x = gumbel_NEW, y = gumbel_OLD), shape = 3, colour = "blue") +
-  geom_point(aes(x = uvsd_NEW, y = uvsd_OLD), shape = 2, colour = "red") + 
+  geom_line(aes(group = 1), linewidth = lsize) +
+  geom_point(size = psize) +
+  geom_point(aes(x = gumbel_NEW, y = gumbel_OLD), shape = 3, colour = "blue", size = psize) +
+  geom_point(aes(x = uvsd_NEW, y = uvsd_OLD), shape = 2, colour = "red", size = psize) + 
   coord_fixed(xlim = c(0, 1), ylim = c(0, 1)) +
+  scale_x_continuous(breaks = c(0, 0.5, 1), labels = c("0", ".5", "1")) +
+  scale_y_continuous(breaks = c(0, 0.5, 1), labels = c("0", ".5", "1")) +
+  facet_wrap(vars(exp)) +
+  labs(x = "False alarms", y = "Hits") +
   facet_wrap(vars(exp))
+ggsave("roc8-plot1.pdf", width = 16, height = 8, units = "cm")
 
 
+psize <- 2.5
+lsize <- 1.25
+ebsize <- 1.15
 plot_data2 %>% 
   select(-value) %>% 
   pivot_wider(names_from = status, values_from = c(observed, gumbel, uvsd, 
@@ -244,15 +270,19 @@ plot_data2 %>%
   filter(response != "4new") %>% 
   ggplot(aes(x =  observed_NEW, y = observed_OLD)) +
   geom_abline(slope = 1, intercept = 0) +
-   
-    geom_linerange(aes(x = uvsd_NEW, y = uvsd_OLD, ymin = uvsd_low_OLD, ymax = uvsd_high_OLD), colour = "red") +
-   geom_linerange(aes(x = uvsd_NEW, y = uvsd_OLD, xmin = uvsd_low_NEW, xmax = uvsd_high_NEW), colour = "red") +
-  geom_linerange(aes(x = gumbel_NEW, y = gumbel_OLD, ymin = gumbel_low_OLD, ymax = gumbel_high_OLD), colour = "blue") +
-   geom_linerange(aes(x = gumbel_NEW, y = gumbel_OLD, xmin = gumbel_low_NEW, xmax = gumbel_high_NEW), colour = "blue") +
-  geom_line(aes(group = 1)) +
-  geom_point() +
-  geom_point(aes(x = uvsd_NEW, y = uvsd_OLD), shape = 2, colour = "red") +
-  geom_point(aes(x = gumbel_NEW, y = gumbel_OLD), shape = 4, colour = "blue") +
+  geom_line(aes(group = 1), linewidth = lsize) +
+  geom_point(size = psize) +
+    geom_linerange(aes(x = uvsd_NEW, y = uvsd_OLD, ymin = uvsd_low_OLD, ymax = uvsd_high_OLD), 
+                   colour = "red", linewidth = ebsize) +
+   geom_linerange(aes(x = uvsd_NEW, y = uvsd_OLD, xmin = uvsd_low_NEW, xmax = uvsd_high_NEW), 
+                  colour = "red", linewidth = ebsize) +
+    geom_linerange(aes(x = gumbel_NEW, y = gumbel_OLD, ymin = gumbel_low_OLD, ymax = gumbel_high_OLD), 
+                 colour = "blue", linewidth = ebsize) +
+   geom_linerange(aes(x = gumbel_NEW, y = gumbel_OLD, xmin = gumbel_low_NEW, xmax = gumbel_high_NEW), 
+                  colour = "blue", linewidth = ebsize) +
+  geom_point(aes(x = uvsd_NEW, y = uvsd_OLD), shape = 2, colour = "red", size = psize) +
+  geom_point(aes(x = gumbel_NEW, y = gumbel_OLD), shape = 4, colour = "blue", size = psize) +
   coord_fixed(xlim = c(0, 1), ylim = c(0, 1)) +
-  facet_wrap(vars(exp))
-
+  facet_wrap(vars(exp)) +
+  labs(x = "False alarms", y = "Hits")
+ggsave("roc8-plot2.pdf", width = 16, height = 8, units = "cm")

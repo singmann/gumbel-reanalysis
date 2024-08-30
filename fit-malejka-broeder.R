@@ -84,6 +84,85 @@ mbfit_e3_uvsd <- brm(
 )
 
 
+## loo fitting
+all_dat %>% 
+  group_by(experiment) %>% 
+  summarise(n = n_distinct(Subject))
+
+
+### k-fold CV in brms uses log_lik with:
+### allow_new_levels = TRUE, sample_new_levels = "gaussian"
+### gaussian means: If "gaussian", sample new levels from the (multivariate)
+### normal distribution implied by the group-level standard deviations and
+### correlations. see ?prepare_predictions
+## it then aggregates the returned matrix xxx across samples using: 
+## apply(xxx, 2, brms:::log_mean_exp)
+
+library(future)
+plan(multisession, workers = 16)
+exloo_mbfit_e1_gumbel <- kfold(mbfit_e1_gumbel, group = "Subject")
+# Based on 20-fold cross-validation.
+# 
+#            Estimate   SE
+# elpd_kfold  -1007.7 18.9
+# p_kfold       247.4 22.4
+# kfoldic      2015.3 37.8
+exloo_mbfit_e1_uvsd <- kfold(mbfit_e1_uvsd, group = "Subject")
+# Based on 20-fold cross-validation.
+# 
+#            Estimate   SE
+# elpd_kfold  -1003.5 17.2
+# p_kfold       293.4 18.0
+# kfoldic      2006.9 34.4
+loo_compare(exloo_mbfit_e1_gumbel, exloo_mbfit_e1_uvsd)
+#                 elpd_diff se_diff
+# mbfit_e1_uvsd    0.0       0.0   
+# mbfit_e1_gumbel -4.2       6.1 
+
+
+exloo_mbfit_e2_gumbel <- kfold(
+  mbfit_e2_gumbel, group = "Subject", 
+  future_args = list(future.globals = c("log_lik_gumbelbin", "calc_posterior_predictions_gumbelbin", 
+                     "posterior_epred_gumbelbin", "posterior_predict_gumbelbin")))
+#            Estimate   SE
+# elpd_kfold   -819.3  9.7
+# p_kfold       224.1 13.5
+# kfoldic      1638.6 19.4
+exloo_mbfit_e3_gumbel <- kfold(
+  mbfit_e3_gumbel, group = "Subject", 
+  future_args = list(future.globals = c("log_lik_gumbelbin", "calc_posterior_predictions_gumbelbin", 
+                     "posterior_epred_gumbelbin", "posterior_predict_gumbelbin")))
+#            Estimate   SE
+# elpd_kfold   -619.2  8.5
+# p_kfold       149.5 10.2
+# kfoldic      1238.3 17.1
+exloo_mbfit_e2_uvsd <- kfold(
+  mbfit_e2_uvsd, group = "Subject", 
+  future_args = list(future.globals = c("log_lik_uvsdtbin", "calc_posterior_predictions_uvsdtbin", 
+                     "posterior_epred_uvsdtbin", "posterior_predict_uvsdtbin")))
+#            Estimate   SE
+# elpd_kfold   -817.3  9.6
+# p_kfold       265.7 10.2
+# kfoldic      1634.6 19.2
+exloo_mbfit_e3_uvsd <- kfold(
+  mbfit_e3_uvsd, group = "Subject", 
+  future_args = list(future.globals = c("log_lik_uvsdtbin", "calc_posterior_predictions_uvsdtbin", 
+                     "posterior_epred_uvsdtbin", "posterior_predict_uvsdtbin")))
+#            Estimate   SE
+# elpd_kfold   -624.3  9.2
+# p_kfold       167.0  9.8
+# kfoldic      1248.6 18.4
+
+loo_compare(exloo_mbfit_e2_gumbel, exloo_mbfit_e2_uvsd)
+#                 elpd_diff se_diff
+# mbfit_e2_uvsd    0.0       0.0   
+# mbfit_e2_gumbel -2.0       5.7
+#                 elpd_diff se_diff
+# mbfit_e3_gumbel  0.0       0.0   
+# mbfit_e3_uvsd   -5.1       2.5 
+
+loo_compare(exloo_mbfit_e3_gumbel, exloo_mbfit_e3_uvsd)
+
 # pptmp <- prepare_predictions(mbfit_e1_gumbel)
 # log_lik_gumbelbin(2, pptmp)
 # pptmp <- prepare_predictions(mbfit_e1_uvsd)
@@ -186,12 +265,18 @@ plot_dat <- plot_dat %>%
   group_by(experiment, BaseRate) %>% 
   summarise(across(c(hit,fa, hit_gumbel, fa_gumbel, hit_uvsd, fa_uvsd), mean))
 
+psize <- 3.5
+lsize <- 1.5
 plot_dat %>%
   ggplot(aes(x =  fa, y = hit)) +
   geom_abline(slope = 1, intercept = 0) +
-  geom_line(aes(group = 1)) +
-  geom_point() +
-  geom_point(aes(x = fa_gumbel, y = hit_gumbel), shape = 3, colour = "blue") +
-  geom_point(aes(x = fa_uvsd, y = hit_uvsd), shape = 2, colour = "red") + 
+  geom_line(aes(group = 1), linewidth = lsize) +
+  geom_point(size = psize) +
+  geom_point(aes(x = fa_gumbel, y = hit_gumbel), shape = 3, colour = "blue", size = psize) +
+  geom_point(aes(x = fa_uvsd, y = hit_uvsd), shape = 2, colour = "red", size = psize) + 
   coord_fixed(xlim = c(0, 1), ylim = c(0, 1)) +
-  facet_wrap(vars(experiment))
+  scale_x_continuous(breaks = c(0, 0.5, 1), labels = c("0", ".5", "1")) +
+  scale_y_continuous(breaks = c(0, 0.5, 1), labels = c("0", ".5", "1")) +
+  facet_wrap(vars(experiment)) +
+  labs(x = "False alarms", y = "Hits")
+ggsave("malejka-broder-plot1.pdf", width = 22, height = 10, units = "cm")

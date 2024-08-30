@@ -22,11 +22,11 @@ gumbel6agg_stanvars <- "
     thres[5] = crc + (exp(crhm) + exp(crhh));
      
     // calculate probabilities
-    pold[1] = gumbelmin(thres[1], mu, disc);
+    pold[1] = gumbelmin(thres[1], -mu, disc);
     for (i in 2:nthres) {
-      pold[i] = gumbelmin(thres[i], mu, disc) - gumbelmin(thres[i-1], mu, disc);
+      pold[i] = gumbelmin(thres[i], -mu, disc) - gumbelmin(thres[i-1], -mu, disc);
     }
-    pold[6] = 1 - gumbelmin(thres[nthres], mu, disc);
+    pold[6] = 1 - gumbelmin(thres[nthres], -mu, disc);
     pnew[1] = gumbelmin(thres[1], 0, disc);
     for (i in 2:nthres) {
       pnew[i] = gumbelmin(thres[i], 0, disc) - gumbelmin(thres[i-1], 0, disc);
@@ -48,7 +48,7 @@ calc_posterior_predictions_gumbel6agg <- function(i, prep) {
   gumbelmin <- function(x, mu, disc) {
     return(1 - extraDistr::pgumbel(-x,mu,disc))
   }
-  mu <- brms::get_dpar(prep, "mu", i = i)
+  mu <- -brms::get_dpar(prep, "mu", i = i)
   #discsignal <- brms::get_dpar(prep, "discsignal", i = i)
   crc <- brms::get_dpar(prep, "crc", i = i)
   crlm <- brms::get_dpar(prep, "crlm", i = i)
