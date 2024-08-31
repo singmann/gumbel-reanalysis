@@ -7,10 +7,13 @@ gumbel8agg_stanvars <- "
    real gumbel8agg_lpmf(int y, real mu, real crc, 
                     real crlm, real crll, real crlx, 
                     real crhm, real crhh, real crhx,
-                    array[] int oldvec, array[] int newvec) {
+                    int y1, int y2, int y3, int y4, int y5, int y6, int y7, 
+                    int y8, int y9, int y10, int y11, int y12, int y13, int y14, int y15) {
     int nthres = 7;
     vector[nthres+1] pold;
     vector[nthres+1] pnew;
+    array[nthres+1] int oldvec = { y, y1, y2, y3, y4, y5, y6, y7 };
+    array[nthres+1] int newvec = { y8, y9, y10, y11, y12, y13, y14, y15 };
     
     real disc = 1;
     vector[nthres] thres;
@@ -44,7 +47,7 @@ gumbel8agg_family <- custom_family(
   name = "gumbel8agg", 
   dpars = c("mu", "crc", "crlm", "crll", "crlx", "crhm", "crhh", "crhx"), 
   links = c("identity", rep("identity", 7)), lb = c(NA, rep(NA, 7)),
-  type = "int", vars = c("oldmat2[n]", "newmat2[n]")
+  type = "int", vars = paste0("vint", 1:15, "[n]")
 )
 sv_gumbel8agg <- stanvar(scode = gumbel8agg_stanvars, block = "functions")
 
@@ -100,8 +103,10 @@ calc_posterior_predictions_gumbel8agg <- function(i, prep) {
 
 log_lik_gumbel8agg <- function(i, prep) {
   use <- calc_posterior_predictions_gumbel8agg(i = i, prep = prep)
-  oldvec <- prep$data$oldmat[i,]
-  newvec <- prep$data$newmat[i,]
+  oldvec <- c(prep$data$Y[i], prep$data$vint1[i], prep$data$vint2[i], prep$data$vint3[i], 
+              prep$data$vint4[i], prep$data$vint5[i], prep$data$vint6[i], prep$data$vint7[i])
+  newvec <- c(prep$data$vint8[i], prep$data$vint9[i], prep$data$vint10[i], prep$data$vint11[i], 
+              prep$data$vint12[i], prep$data$vint13[i], prep$data$vint14[i], prep$data$vint15[i])
   extraDistr::dmnom(x = oldvec, size = sum(oldvec), prob = use$pold, log = TRUE) + 
      extraDistr::dmnom(x = newvec, size = sum(newvec), prob = use$pnew, log = TRUE)
 }
@@ -120,8 +125,10 @@ posterior_epred_gumbel8agg <- function(prep) {
 
 posterior_predict_gumbel8agg <- function(i, prep, ...) {
   use <- calc_posterior_predictions_gumbel8agg(i = i, prep = prep)
-  oldvec <- prep$data$oldmat[i,]
-  newvec <- prep$data$newmat[i,]
+  oldvec <- c(prep$data$Y[i], prep$data$vint1[i], prep$data$vint2[i], prep$data$vint3[i], 
+              prep$data$vint4[i], prep$data$vint5[i], prep$data$vint6[i], prep$data$vint7[i])
+  newvec <- c(prep$data$vint8[i], prep$data$vint9[i], prep$data$vint10[i], prep$data$vint11[i], 
+              prep$data$vint12[i], prep$data$vint13[i], prep$data$vint14[i], prep$data$vint15[i])
   
   lout <- nrow(use$pold)
   out <- cbind(extraDistr::rmnom(n = rep(1, lout), size = sum(oldvec), prob = use$pold), 

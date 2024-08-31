@@ -52,8 +52,6 @@ calc_posterior_predictions_uvsdt6agg <- function(i, prep) {
   crhm <- brms::get_dpar(prep, "crhm", i = i)
   crhh <- brms::get_dpar(prep, "crhh", i = i)
 
-  oldvec <- prep$data$oldmat[i,]
-  newvec <- prep$data$newmat[i,]
   OUTLEN <- length(mu)
   
   nthres <- 5
