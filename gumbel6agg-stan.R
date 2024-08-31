@@ -6,10 +6,13 @@ gumbel6agg_stanvars <- "
    }
    real gumbel6agg_lpmf(int y, real mu, 
                    real crc, real crlm, real crll, real crhm, real crhh, 
-                   array[] int oldvec, array[] int newvec) {
+                   int y1, int y2, int y3, int y4, int y5, 
+                   int y6, int y7, int y8, int y9, int y10, int y11) {
     int nthres = 5;
     vector[nthres+1] pold;
     vector[nthres+1] pnew;
+    array[6] int oldvec = { y, y1, y2, y3, y4, y5 };
+    array[6] int newvec = { y6, y7, y8, y9, y10, y11 };
     
     real disc = 1;
     vector[nthres] thres;
@@ -40,8 +43,9 @@ gumbel6agg_family <- custom_family(
   name = "gumbel6agg", 
   dpars = c("mu", "crc", "crlm", "crll", "crhm", "crhh"), 
   links = c("identity", rep("identity", 5)), lb = c(NA, rep(NA, 5)),
-  type = "int", vars = c("oldmat2[n]", "newmat2[n]")
+  type = "int", vars = paste0("vint", 1:11, "[n]")
 )
+
 sv_gumbel6agg <- stanvar(scode = gumbel6agg_stanvars, block = "functions")
 
 calc_posterior_predictions_gumbel6agg <- function(i, prep) {
@@ -56,8 +60,6 @@ calc_posterior_predictions_gumbel6agg <- function(i, prep) {
   crhm <- brms::get_dpar(prep, "crhm", i = i)
   crhh <- brms::get_dpar(prep, "crhh", i = i)
 
-  oldvec <- prep$data$oldmat[i,]
-  newvec <- prep$data$newmat[i,]
   OUTLEN <- length(mu)
   
   disc <- 1
@@ -92,8 +94,10 @@ calc_posterior_predictions_gumbel6agg <- function(i, prep) {
 
 log_lik_gumbel6agg <- function(i, prep) {
   use <- calc_posterior_predictions_gumbel6agg(i = i, prep = prep)
-  oldvec <- prep$data$oldmat[i,]
-  newvec <- prep$data$newmat[i,]
+  oldvec <- c(prep$data$Y[i], prep$data$vint1[i], prep$data$vint2[i], 
+              prep$data$vint3[i], prep$data$vint4[i], prep$data$vint5[i])
+  newvec <- c(prep$data$vint6[i], prep$data$vint7[i], prep$data$vint8[i], 
+              prep$data$vint9[i], prep$data$vint10[i], prep$data$vint11[i])
   extraDistr::dmnom(x = oldvec, size = sum(oldvec), prob = use$pold, log = TRUE) + 
      extraDistr::dmnom(x = newvec, size = sum(newvec), prob = use$pnew, log = TRUE)
 }
@@ -112,9 +116,10 @@ posterior_epred_gumbel6agg <- function(prep) {
 
 posterior_predict_gumbel6agg <- function(i, prep, ...) {
   use <- calc_posterior_predictions_gumbel6agg(i = i, prep = prep)
-  oldvec <- prep$data$oldmat[i,]
-  newvec <- prep$data$newmat[i,]
-  
+  oldvec <- c(prep$data$Y[i], prep$data$vint1[i], prep$data$vint2[i], 
+              prep$data$vint3[i], prep$data$vint4[i], prep$data$vint5[i])
+  newvec <- c(prep$data$vint6[i], prep$data$vint7[i], prep$data$vint8[i], 
+              prep$data$vint9[i], prep$data$vint10[i], prep$data$vint11[i])
   lout <- nrow(use$pold)
   out <- cbind(extraDistr::rmnom(n = rep(1, lout), size = sum(oldvec), prob = use$pold), 
                extraDistr::rmnom(n = rep(1, lout), size = sum(oldvec), prob = use$pnew))

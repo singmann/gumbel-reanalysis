@@ -18,7 +18,7 @@ str(roc6_use)
 dataset6 <- levels(roc6_use$exp)
 
 gumbel_formula <- brmsformula(
-  OLD_3new ~ 1 + (1|p|id), 
+  OLD_3new | vint(OLD_2new, OLD_1new, OLD_1old, OLD_2old, OLD_3old, NEW_3new, NEW_2new, NEW_1new, NEW_1old, NEW_2old, NEW_3old) ~ 1 + (1|p|id), 
   crc ~ (1|p|id), 
   crlm ~ (1|p|id), crll ~ (1|p|id), 
   crhm ~ (1|p|id), crhh ~ (1|p|id),
@@ -33,7 +33,7 @@ gumbel_priors <- prior(normal(0,0.5), class = Intercept, dpar = "crc") +
   prior(student_t(3, 1, 2), class = Intercept)
 
 uvsdt_formula <- brmsformula(
-  OLD_3new ~ 1 + (1|p|id), 
+  OLD_3new | vint(OLD_2new, OLD_1new, OLD_1old, OLD_2old, OLD_3old, NEW_3new, NEW_2new, NEW_1new, NEW_1old, NEW_2old, NEW_3old) ~ 1 + (1|p|id), 
   discsignal ~ 1 + (1|p|id), 
   crc ~ (1|p|id), 
   crlm ~ (1|p|id), crll ~ (1|p|id), 
@@ -50,9 +50,6 @@ uvsdt_priors <- prior(normal(0,0.5), class = Intercept, dpar = "crc") +
   prior(student_t(3, 1, 2), class = Intercept)
 
 roc6_data <- vector("list", length(dataset6))
-roc6_oldmat <- vector("list", length(dataset6))
-roc6_newmat <- vector("list", length(dataset6))
-roc6_sv <- vector("list", length(dataset6))
 
 roc6_fits_gumbel <- vector("list", length(dataset6))
 roc6_fits_uvsdt <- vector("list", length(dataset6))
@@ -69,40 +66,26 @@ for (i in seq_along(dataset6)) {
   print(i)
   roc6_data[[i]] <- roc6_use %>% 
     filter(exp == dataset6[i])
-  roc6_oldmat[[i]] <- roc6_data[[i]] %>% 
-                                  select(OLD_3new:OLD_3old) %>% 
-                                  as.matrix()
-  roc6_newmat[[i]] <- roc6_data[[i]] %>% 
-                                  select(NEW_3new:NEW_3old) %>% 
-                                  as.matrix()
-  roc6_sv[[i]] <- stanvar(roc6_oldmat[[i]], name = "oldmat", block = "data") +
-    stanvar(scode = "array[N, 6] int oldmat2;", block = "tdata") +
-    stanvar(scode = "oldmat2 = to_int(to_array_2d(oldmat));", block = "tdata") +
-    stanvar(roc6_newmat[[i]], name = "newmat", block = "data") +
-    stanvar(scode = "array[N, 6] int newmat2;", block = "tdata") +
-    stanvar(scode = "newmat2 = to_int(to_array_2d(newmat));", block = "tdata")
-  
   roc6_fits_gumbel[[i]] <- brm(
     gumbel_formula, data = roc6_data[[i]], 
-    stanvars = sv_gumbel6agg + roc6_sv[[i]], 
+    stanvars = sv_gumbel6agg ,
     prior = gumbel_priors,
     init_r = 0.5
   )
+  roc6_exloo_gumbel[[i]] <- kfold(
+    x = roc6_fits_gumbel[[i]], group = "id", sample_new_levels = "uncertainty",
+    future_args = list(future.globals = c("log_lik_gumbel6agg", "calc_posterior_predictions_gumbel6agg", 
+                                          "posterior_epred_gumbel6agg", "posterior_predict_gumbel6agg")))
   
   roc6_fits_uvsdt[[i]] <- brm(
     uvsdt_formula, data = roc6_data[[i]], 
-    stanvars = sv_uvsdt6agg + roc6_sv[[i]], 
+    stanvars = sv_uvsdt6agg, 
     prior = uvsdt_priors,
     init_r = 0.5
   )
-  
-  roc6_exloo_gumbel[[i]] <- kfold(
-    x = roc6_fits_gumbel[[i]], group = "id", 
-    future_args = list(future.globals = c("log_lik_gumbel6gg", "calc_posterior_predictions_gumbel6agg", 
-                                          "posterior_epred_gumbel6agg", "posterior_predict_gumbel6agg")))
   roc6_exloo_uvsdt[[i]] <- kfold(
-    x = roc6_fits_uvsdt[[i]], group = "id", 
-    future_args = list(future.globals = c("log_lik_uvsdt6gg", "calc_posterior_predictions_uvsdt6agg", 
+    x = roc6_fits_uvsdt[[i]], group = "id", sample_new_levels = "uncertainty",
+    future_args = list(future.globals = c("log_lik_uvsdt6agg", "calc_posterior_predictions_uvsdt6agg", 
                                           "posterior_epred_uvsdt6agg", "posterior_predict_uvsdt6agg")))
   
 }
@@ -110,6 +93,41 @@ end_time <- Sys.time()
 # Time difference
 time_elapsed <- end_time - start_time
 print(time_elapsed)
+
+exloo_6roc <- mapply(loo_compare, roc6_exloo_gumbel, roc6_exloo_uvsdt, SIMPLIFY = FALSE)
+
+str(roc6_exloo_gumbel[[1]])
+
+roc6_exloo_gumbel[[1]]$estimates
+dimnames(exloo_6roc[[1]])
+
+as.data.frame(exloo_6roc[[1]])
+
+tibble(
+  dataset = dataset6,
+  elpd_g = map_dbl(roc6_exloo_gumbel, ~.$estimates["elpd_kfold","Estimate"]),
+  elpd_uv = map_dbl(roc6_exloo_uvsdt, ~.$estimates["elpd_kfold","Estimate"]),
+) %>% 
+  mutate(max_elpd = pmax(elpd_g, elpd_uv)) %>% 
+  mutate(across(c(elpd_g, elpd_uv), ~ sprintf(.-max_elpd, fmt = '%#.1f'))) %>% 
+  mutate(diff_SE = map_dbl(exloo_6roc, ~ .[2, "se_diff"])) %>% 
+  mutate(diff_sig = map_lgl(exloo_6roc, ~ abs(.[2, "elpd_diff"]) > (2*.[2, "se_diff"])))
+# # A tibble: 12 × 6
+#    dataset             elpd_g elpd_uv max_elpd diff_SE diff_sig
+#    <chr>               <chr>  <chr>      <dbl>   <dbl> <lgl>   
+#  1 Dube_2012-P         -7.8   0.0       -1032.   13.8  FALSE   
+#  2 Dube_2012-W         0.0    -1.4      -1155.   19.4  FALSE   
+#  3 Heathcote_2006_e1   0.0    -11.2      -769.   13.7  FALSE   
+#  4 Heathcote_2006_e2   -32.5  0.0       -1018.   21.1  FALSE   
+#  5 Jaeger_2012         -35.4  0.0       -1639.   15.7  TRUE    
+#  6 Jang_2009           0.0    -3.9      -1030.    7.12 FALSE   
+#  7 Koen_2010_pure      0.0    -0.9      -1528.   17.6  FALSE   
+#  8 Koen_2011           -3.6   0.0       -1270.   20.2  FALSE   
+#  9 Koen-2013_full      -16.7  0.0       -1507.   10.7  FALSE   
+# 10 Koen-2013_immediate 0.0    -3.8      -1769.   16.1  FALSE   
+# 11 Pratte_2010         0.0    -9.7      -4403.   30.8  FALSE   
+# 12 Smith_2004          0.0    -1.3       -848.    6.96 FALSE   
+
 
 # stancode(gumbel_formula, data = roc6_data[[i]], 
 #          stanvars = roc6_sv[[i]], 
@@ -222,7 +240,14 @@ plot_data2$uvsd_high <- unlist(map(pred_uvsdt,
                                     ~apply(apply(., c(1, 3), mean), 
                                            2, quantile, probs = 0.975)))
 
-# str(apply(pred_gumbel[[1]], c(1, 3), mean))
+plot_data_roc6 <- plot_data
+plot_data2_roc6 <- plot_data2
+
+save(plot_data_roc6, plot_data2_roc6, 
+     roc6_exloo_gumbel, roc6_exloo_uvsdt, exloo_6roc, 
+     file = "roc6_exloo_res.rda")
+
+# str(apply(pred_gplot_data# str(apply(pred_gumbel[[1]], c(1, 3), mean))
 # str(pred_gumbel)
 
 psize <- 3.5
