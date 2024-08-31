@@ -52,3 +52,24 @@ fit_uvsdt_rank <- brm(
 #                      Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
 # Intercept                1.29      0.13     1.04     1.54 1.01      579     1064
 # discsignal_Intercept    -0.36      0.04    -0.44    -0.28 1.00     2371     2725
+
+
+gumbel_formula <- brmsformula(
+  V1 | vint(V2, V3, V4) ~ 1 + (1|p|id), 
+  family = gumbelrank_family, cmc = FALSE
+)
+
+get_prior(gumbel_formula, data = ranking.data)
+
+gumbel_priors <- prior(student_t(3, 1, 2), class = Intercept)
+
+stancode(gumbel_formula, data = ranking.data, 
+         stanvars = sv_gumbelrank, prior = gumbel_priors)
+
+fit_gumbel_rank <- brm(
+    gumbel_formula, data = ranking.data, 
+    stanvars = sv_gumbelrank, 
+    prior = gumbel_priors,
+    init_r = 0.25, 
+    control = list(adapt_delta = 0.99)
+  )
