@@ -36,20 +36,19 @@ uvsdtrank_stanvars <- "
   real uvsdtrank_lpmf(int y, real mu, real discsignal, 
                    int y1, int y2, int y3, 
                    data array[] real x_r, data array[] int x_i) {
-  real disc = 1/discsignal;
   vector[4] p;
   array[4] int respvec = { y, y1, y2, y3 };
   
   // ((pnorm(x)^3)*dnorm(x,mean=mu,sd=ss))
   p[1] = integrate_1d(getp1, negative_infinity(),
                              positive_infinity(),
-                             { mu, disc }, x_r, x_i);
+                             { mu, discsignal }, x_r, x_i);
   p[2] = integrate_1d(getp2, negative_infinity(),
                              positive_infinity(),
-                             { mu, disc }, x_r, x_i);
+                             { mu, discsignal }, x_r, x_i);
   p[3] = integrate_1d(getp3, negative_infinity(),
                              positive_infinity(),
-                             { mu, disc }, x_r, x_i);
+                             { mu, discsignal }, x_r, x_i);
   p[4] = 1-p[1]-p[2]-p[3];
 
   return multinomial_lpmf(respvec | p);
@@ -72,7 +71,7 @@ sv_uvsdtrank <- stanvar(scode = uvsdtrank_stanvars, block = "functions") +
 
 calc_posterior_predictions_uvsdtrank <- function(i, prep) {
   mu <- brms::get_dpar(prep, "mu", i = i)
-  discsignal <- 1/brms::get_dpar(prep, "discsignal", i = i)
+  discsignal <- brms::get_dpar(prep, "discsignal", i = i)
 
   OUTLEN <- length(mu)
   
