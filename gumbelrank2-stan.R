@@ -1,14 +1,18 @@
-uvsdtrank_stanvars <- "
-  real getp1(real x,             // Function argument
+gumbelrank_stanvars <- "
+   real gumbelmin(real x, real mu, real disc){
+     //return 1- exp(-exp(-(-x-mu)/disc));
+     //return exp(gumbel_lccdf(-x | mu,disc));
+     return 1 - gumbel_cdf(-x|mu,disc);
+   }
+    real getp1(real x,             // Function argument
              real xc,            // Complement of function argument
                                 //  on the domain (defined later)
              array[] real theta, // parameters
              array[] real x_r,   // data (real)
              array[] int x_i) {  // data (integer)
     real mu = theta[1];
-    real sigma = theta[2];
   
-    return ( (Phi(x)^3) * exp(normal_lpdf(x | mu, sigma)) );
+    return ( (gumbelmin(x, 0, 1)^3) * exp(gumbel_lpdf(-x | mu, 1)) );
   }
   real getp2(real x,             // Function argument
              real xc,            // Complement of function argument
@@ -17,9 +21,8 @@ uvsdtrank_stanvars <- "
              array[] real x_r,   // data (real)
              array[] int x_i) {  // data (integer)
     real mu = theta[1];
-    real sigma = theta[2];
   
-    return ( (Phi(x)^2) * exp(normal_lpdf(x | mu, sigma)) * (1 - Phi(x)) ) * 3;
+    return ( (gumbelmin(x, 0, 1)^2) * exp(gumbel_lpdf(-x | mu, 1)) * (1 - gumbelmin(x, 0, 1)) ) * 3;
   }
   real getp3(real x,             // Function argument
              real xc,            // Complement of function argument
@@ -28,100 +31,96 @@ uvsdtrank_stanvars <- "
              array[] real x_r,   // data (real)
              array[] int x_i) {  // data (integer)
     real mu = theta[1];
-    real sigma = theta[2];
   
-    return ( (Phi(x)) * exp(normal_lpdf(x | mu, sigma)) * (1 - Phi(x))^2 ) * 3;
+    return ( (gumbelmin(x, 0, 1)) * exp(gumbel_lpdf(-x | mu, 1)) * (1 - gumbelmin(x, 0, 1))^2 ) * 3;
   }
   
-  real uvsdtrank_lpmf(int y, real mu, real discsignal, 
-                   int y1, int y2, int y3, 
+  real gumbelrank_lpmf(int y, real mu,
+                   int y1, int y2, int y3,
                    data array[] real x_r, data array[] int x_i) {
   vector[4] p;
   array[4] int respvec = { y, y1, y2, y3 };
   
-  // ((pnorm(x)^3)*dnorm(x,mean=mu,sd=ss))
   p[1] = integrate_1d(getp1, negative_infinity(),
                              positive_infinity(),
-                             { mu, discsignal }, x_r, x_i);
+                             { -mu }, x_r, x_i);
   p[2] = integrate_1d(getp2, negative_infinity(),
                              positive_infinity(),
-                             { mu, discsignal }, x_r, x_i);
+                             { -mu }, x_r, x_i);
   p[3] = integrate_1d(getp3, negative_infinity(),
                              positive_infinity(),
-                             { mu, discsignal }, x_r, x_i);
+                             { -mu }, x_r, x_i);
   p[4] = 1-p[1]-p[2]-p[3];
 
   return multinomial_lpmf(respvec | p);
   }
 "
 
-uvsdtrank_stanvars_tdata <- "
+gumbelrank_stanvars_tdata <- "
     array[0] real x_r;
     array[0] int x_i;
 "
 
-uvsdtrank_family <- custom_family(
-  name = "uvsdtrank", 
-  dpars = c("mu", "discsignal"), 
-  links = c("identity", "log"), lb = c(NA, 0),
+gumbelrank_family <- custom_family(
+  name = "gumbelrank", 
+  dpars = c("mu"), 
+  links = c("identity"), lb = c(NA),
   type = "int", vars = c(paste0("vint", 1:3, "[n]"), "x_r", "x_i")
 )
-sv_uvsdtrank <- stanvar(scode = uvsdtrank_stanvars, block = "functions") +
-  stanvar(scode = uvsdtrank_stanvars_tdata, block = "tdata")
+sv_gumbelrank <- stanvar(scode = gumbelrank_stanvars, block = "functions") +
+  stanvar(scode = gumbelrank_stanvars_tdata, block = "tdata")
 
-calc_posterior_predictions_uvsdtrank <- function(i, prep) {
+calc_posterior_predictions_gumbelrank <- function(i, prep) {
   mu <- brms::get_dpar(prep, "mu", i = i)
-  discsignal <- brms::get_dpar(prep, "discsignal", i = i)
-
   OUTLEN <- length(mu)
   
   p <- matrix(NA_real_, nrow = OUTLEN, ncol = 4)
   
-  G1<-function(x, mu, sd){
-    ((pnorm(x)^3)*dnorm(x,mean=mu,sd=sd))
+  G1<-function(x, mu){
+    ((ordinal::pgumbel(x, max = FALSE)^3)*ordinal::dgumbel(x, mu, max = FALSE))
   }
   
-  G2<-function(x, mu, sd){
-    ((pnorm(x)^2)*dnorm(x,mean=mu,sd=sd)*(1-pnorm(x)))*3
+  G2<-function(x, mu){
+    ((ordinal::pgumbel(x, max = FALSE)^2)*ordinal::dgumbel(x,mu, max = FALSE)*(1-ordinal::pgumbel(x, max = FALSE)))*3
   }
   
-  G3<-function(x, mu, sd){
-    (pnorm(x)*dnorm(x,mean=mu,sd=sd)*(1-pnorm(x))^2)*3
+  G3<-function(x, mu){
+    (ordinal::pgumbel(x, max = FALSE)*ordinal::dgumbel(x,mu, max = FALSE)*(1-ordinal::pgumbel(x, max = FALSE))^2)*3
   }
 
   for (j in seq_len(OUTLEN)) {
-    p[j, 1] <- integrate(G1,-Inf,Inf, mu = mu[j], sd = discsignal[j],
+    p[j, 1] <- integrate(G1,-Inf,Inf, mu = -mu[j],
                          rel.tol = .Machine$double.eps^0.5)$value    
-    p[j, 2] <- integrate(G2,-Inf,Inf, mu = mu[j], sd = discsignal[j],
+    p[j, 2] <- integrate(G2,-Inf,Inf, mu = -mu[j],
                          rel.tol = .Machine$double.eps^0.5)$value
-    p[j, 3] <- integrate(G3,-Inf,Inf, mu = mu[j], sd = discsignal[j],
+    p[j, 3] <- integrate(G3,-Inf,Inf, mu = -mu[j],
                          rel.tol = .Machine$double.eps^0.5)$value
   }
   p[, 4] <- 1-p[,1]-p[,2]-p[,3]
   return(p)
 }
 
-log_lik_uvsdtrank <- function(i, prep) {
-  p <- calc_posterior_predictions_uvsdtrank(i = i, prep = prep)
+log_lik_gumbelrank <- function(i, prep) {
+  p <- calc_posterior_predictions_gumbelrank(i = i, prep = prep)
   dvec <- c(prep$data$Y[i], prep$data$vint1[i], prep$data$vint2[i], 
               prep$data$vint3[i])
   extraDistr::dmnom(x = dvec, size = sum(dvec), prob = p, log = TRUE)
 }
 
-posterior_epred_uvsdtrank <- function(prep) {
+posterior_epred_gumbelrank <- function(prep) {
   nobs <- prep$nobs
   out <- array(NA_real_, dim = c(prep$ndraws, prep$nobs, 4), 
                dimnames = list(seq(prep$ndraws), seq(prep$nobs), 
                                c("R1", "R2", "R3", "R4")))
   for (i in seq_len(nobs)) {
-    tmp <- calc_posterior_predictions_uvsdtrank(i = i, prep = prep)
+    tmp <- calc_posterior_predictions_gumbelrank(i = i, prep = prep)
     out[,i,] <- tmp
   }
   return(out)
 }
 
-posterior_predict_uvsdtrank <- function(i, prep, ...) {
-  p <- calc_posterior_predictions_uvsdtrank(i = i, prep = prep)
+posterior_predict_gumbelrank <- function(i, prep, ...) {
+  p <- calc_posterior_predictions_gumbelrank(i = i, prep = prep)
   dvec <- c(prep$data$Y[i], prep$data$vint1[i], prep$data$vint2[i], 
               prep$data$vint3[i])
   
