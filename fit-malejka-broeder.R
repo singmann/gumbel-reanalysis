@@ -90,7 +90,7 @@ all_dat %>%
   summarise(n = n_distinct(Subject))
 
 
-### k-fold CV in brms uses log_lik with:
+### k-fold CV in brms per default runs log_lik with:
 ### allow_new_levels = TRUE, sample_new_levels = "gaussian"
 ### gaussian means: If "gaussian", sample new levels from the (multivariate)
 ### normal distribution implied by the group-level standard deviations and
@@ -99,69 +99,74 @@ all_dat %>%
 ## apply(xxx, 2, brms:::log_mean_exp)
 
 library(future)
-plan(multisession, workers = 16)
-exloo_mbfit_e1_gumbel <- kfold(mbfit_e1_gumbel, group = "Subject")
+plan(multisession, workers = 12)
+exloo_mbfit_e1_gumbel <- kfold(
+  x = mbfit_e1_gumbel, group = "Subject", sample_new_levels = "uncertainty", 
+  future_args = list(future.globals = c("log_lik_gumbelbin", "calc_posterior_predictions_gumbelbin", 
+                                        "posterior_epred_gumbelbin", "posterior_predict_gumbelbin")))
 # Based on 20-fold cross-validation.
 # 
 #            Estimate   SE
-# elpd_kfold  -1007.7 18.9
-# p_kfold       247.4 22.4
-# kfoldic      2015.3 37.8
-exloo_mbfit_e1_uvsd <- kfold(mbfit_e1_uvsd, group = "Subject")
+# elpd_kfold  -1016.3 26.2
+# p_kfold       256.5 27.3
+# kfoldic      2032.7 52.4
+exloo_mbfit_e1_uvsd <- kfold(
+  x = mbfit_e1_uvsd, group = "Subject", sample_new_levels = "uncertainty",
+  future_args = list(future.globals = c("log_lik_uvsdtbin", "calc_posterior_predictions_uvsdtbin", 
+                                        "posterior_epred_uvsdtbin", "posterior_predict_uvsdtbin")))
 # Based on 20-fold cross-validation.
 # 
 #            Estimate   SE
-# elpd_kfold  -1003.5 17.2
-# p_kfold       293.4 18.0
-# kfoldic      2006.9 34.4
-loo_compare(exloo_mbfit_e1_gumbel, exloo_mbfit_e1_uvsd)
-#                 elpd_diff se_diff
+# elpd_kfold  -1009.3 25.6
+# p_kfold       299.3 26.0
+# kfoldic      2018.6 51.2
+exloo_bm_e1 <- loo_compare(exloo_mbfit_e1_gumbel, exloo_mbfit_e1_uvsd)
+#                  elpd_diff se_diff
 # mbfit_e1_uvsd    0.0       0.0   
-# mbfit_e1_gumbel -4.2       6.1 
-
+# mbfit_e1_gumbel -7.0       8.8  
 
 exloo_mbfit_e2_gumbel <- kfold(
-  mbfit_e2_gumbel, group = "Subject", 
+  mbfit_e2_gumbel, group = "Subject", sample_new_levels = "uncertainty",
   future_args = list(future.globals = c("log_lik_gumbelbin", "calc_posterior_predictions_gumbelbin", 
                      "posterior_epred_gumbelbin", "posterior_predict_gumbelbin")))
 #            Estimate   SE
-# elpd_kfold   -819.3  9.7
-# p_kfold       224.1 13.5
-# kfoldic      1638.6 19.4
+# elpd_kfold   -835.9 16.9
+# p_kfold       240.7 18.2
+# kfoldic      1671.8 33.7
 exloo_mbfit_e3_gumbel <- kfold(
-  mbfit_e3_gumbel, group = "Subject", 
+  mbfit_e3_gumbel, group = "Subject", sample_new_levels = "uncertainty",
   future_args = list(future.globals = c("log_lik_gumbelbin", "calc_posterior_predictions_gumbelbin", 
                      "posterior_epred_gumbelbin", "posterior_predict_gumbelbin")))
 #            Estimate   SE
-# elpd_kfold   -619.2  8.5
-# p_kfold       149.5 10.2
-# kfoldic      1238.3 17.1
+# elpd_kfold   -635.9 16.0
+# p_kfold       166.4 16.7
+# kfoldic      1271.8 32.0
 exloo_mbfit_e2_uvsd <- kfold(
-  mbfit_e2_uvsd, group = "Subject", 
+  mbfit_e2_uvsd, group = "Subject", sample_new_levels = "uncertainty",
   future_args = list(future.globals = c("log_lik_uvsdtbin", "calc_posterior_predictions_uvsdtbin", 
                      "posterior_epred_uvsdtbin", "posterior_predict_uvsdtbin")))
 #            Estimate   SE
-# elpd_kfold   -817.3  9.6
-# p_kfold       265.7 10.2
-# kfoldic      1634.6 19.2
+# elpd_kfold   -831.0 17.9
+# p_kfold       279.5 17.2
+# kfoldic      1662.0 35.7
 exloo_mbfit_e3_uvsd <- kfold(
-  mbfit_e3_uvsd, group = "Subject", 
+  mbfit_e3_uvsd, group = "Subject", sample_new_levels = "uncertainty",
   future_args = list(future.globals = c("log_lik_uvsdtbin", "calc_posterior_predictions_uvsdtbin", 
                      "posterior_epred_uvsdtbin", "posterior_predict_uvsdtbin")))
 #            Estimate   SE
-# elpd_kfold   -624.3  9.2
-# p_kfold       167.0  9.8
-# kfoldic      1248.6 18.4
+# elpd_kfold   -640.2 16.7
+# p_kfold       182.8 16.7
+# kfoldic      1280.5 33.4
 
-loo_compare(exloo_mbfit_e2_gumbel, exloo_mbfit_e2_uvsd)
+exloo_bm_e2 <- loo_compare(exloo_mbfit_e2_gumbel, exloo_mbfit_e2_uvsd)
 #                 elpd_diff se_diff
 # mbfit_e2_uvsd    0.0       0.0   
-# mbfit_e2_gumbel -2.0       5.7
+# mbfit_e2_gumbel -4.9       8.6   
+
+exloo_bm_e3 <- loo_compare(exloo_mbfit_e3_gumbel, exloo_mbfit_e3_uvsd)
 #                 elpd_diff se_diff
 # mbfit_e3_gumbel  0.0       0.0   
-# mbfit_e3_uvsd   -5.1       2.5 
-
-loo_compare(exloo_mbfit_e3_gumbel, exloo_mbfit_e3_uvsd)
+# mbfit_e3_uvsd   -4.3       2.6   
 
 # pptmp <- prepare_predictions(mbfit_e1_gumbel)
 # log_lik_gumbelbin(2, pptmp)
@@ -264,6 +269,15 @@ plot_dat <- bind_cols(
 plot_dat <- plot_dat %>% 
   group_by(experiment, BaseRate) %>% 
   summarise(across(c(hit,fa, hit_gumbel, fa_gumbel, hit_uvsd, fa_uvsd), mean))
+
+plot_data_mb <- plot_dat
+
+save(plot_data_mb, 
+     exloo_mbfit_e1_uvsd, exloo_mbfit_e1_gumbel, 
+     exloo_mbfit_e2_uvsd, exloo_mbfit_e2_gumbel, 
+     exloo_mbfit_e3_uvsd, exloo_mbfit_e3_gumbel, 
+     exloo_bm_e1, exloo_bm_e2, exloo_bm_e3,
+     file = "mb_exloo_res.rda")
 
 psize <- 3.5
 lsize <- 1.5
