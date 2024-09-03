@@ -18,7 +18,7 @@ library("tidybayes")
 (colSums(dobbins23_fc2[,-3]) / sum(dobbins23_fc2[,-3])) %>% 
   print(digits = 3)
   # correct incorrect 
-  #   0.742     0.258 
+  #   0.547     0.453 
   
 
 gumbel_formula <- brmsformula(
@@ -146,6 +146,31 @@ fit_dob23_2_uvsd <-  brm(
     prior = uvsdt_priors,
     init_r = 0.5
   )
+
+
+pred_dob2_gumbel <- posterior_epred(fit_dob23_2_gumbel)
+gp2 <- apply(pred_dob2_gumbel, c(1,3), mean)
+apply(gp2, 2, mean) %>% 
+  print(digits = 2)
+  # correct incorrect 
+  #    0.73      0.27 
+apply(gp2, 2, quantile, probs = c(0.027, 0.975)) %>% 
+  print(digits = 2)
+#       correct incorrect
+# 2.7%     0.72      0.27
+# 97.5%    0.73      0.28
+
+pred_dob2_uvsd <- posterior_epred(fit_dob23_2_uvsd)
+up2 <- apply(pred_dob2_uvsd, c(1,3), mean)
+apply(up2, 2, mean) %>% 
+  print(digits = 2)
+  # correct incorrect 
+  #    0.74      0.26 
+apply(up2, 2, quantile, probs = c(0.027, 0.975)) %>% 
+  print(digits = 2)
+#       correct incorrect
+# 2.7%     0.73      0.25
+# 97.5%    0.75      0.27
 
 dob2pred <- left_join(dobbins23_yn2, dobbins23_fc2)
 
