@@ -187,7 +187,50 @@ save(exloo_kke1, exloo_kke1_gumbel, exloo_kke1_uvsdt,
 ##---------------------------------------------------------------
 ##                            3 Ranks                           -
 ##---------------------------------------------------------------
+source("gumbelrank2-3r-stan.R")
+source("uvsdtrank3-stan.R")
+
+##-----------
+##  KK14 E2  
+##-----------
 
 kk14_e2
+
+kk14_e2_use <- kk14_e2 %>% 
+  pivot_longer(cols = rank1.w:rank3.s, 
+               names_to = c("rank", "strength"), names_sep = "\\.") %>% 
+  pivot_wider(names_from = rank, values_from = value) %>% 
+  mutate(strength = factor(strength, levels = c("w", "s")))
+
+
+gumbel_formula_kke2 <- brmsformula(
+  rank1 | vint(rank2, rank3) ~ strength + (strength|p|id), 
+  family = gumbelrank3_family, cmc = FALSE
+)
+
+fit_kke2_gumbel <- brm(
+    gumbel_formula_kke2, data = kk14_e2_use, 
+    stanvars = sv_gumbelrank3, 
+    prior = gumbel_priors,
+    init_r = 0.25
+    #control = list(adapt_delta = 0.99)
+  )
+
+uvsdt_formula_kke2 <- brmsformula(
+  rank1 | vint(rank2, rank3) ~ strength + (strength|p|id), 
+  discsignal ~ 1 + (1|p|id),
+  family = uvsdtrank3_family, cmc = FALSE
+)
+
+fit_kke2_uvsdt <- brm(
+    uvsdt_formula_kke2, data = kk14_e2_use, 
+    stanvars = sv_uvsdtrank3, 
+    prior = uvsdt_priors,
+    init_r = 0.25
+    #control = list(adapt_delta = 0.99)
+  )
+
+
+
 mg16_e1
 mg16_e2

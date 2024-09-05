@@ -19,7 +19,7 @@ uvsdtrank_stanvars <- "
     real mu = theta[1];
     real sigma = theta[2];
   
-    return ( (Phi(x)^2) * exp(normal_lpdf(x | mu, sigma)) * (1 - Phi(x)) ) * 3;
+    return( ( (Phi(x)^2) * exp(normal_lpdf(x | mu, sigma)) * (1 - Phi(x)) ) * 3);
   }
   real getp3(real x,             // Function argument
              real xc,            // Complement of function argument
@@ -30,7 +30,7 @@ uvsdtrank_stanvars <- "
     real mu = theta[1];
     real sigma = theta[2];
   
-    return ( (Phi(x)) * exp(normal_lpdf(x | mu, sigma)) * (1 - Phi(x))^2 ) * 3;
+    return( ( (Phi(x)) * exp(normal_lpdf(x | mu, sigma)) * (1 - Phi(x))^2 ) * 3);
   }
   
   real uvsdtrank_lpmf(int y, real mu, real discsignal, 
