@@ -31,7 +31,7 @@ mhe_e1 <- structure(c(21L, 26L, 36L, 45L, 17L, 32L, 32L, 47L, 33L, 25L,
     NULL, c("rank1.w", "rank2.w", "rank3.w", "rank4.w", "rank1.s", 
     "rank2.s", "rank3.s", "rank4.s"))) %>% 
   as.data.frame() %>% 
-  mutate(subject = 1:n())
+  mutate(id = 1:n())
 
 
 
@@ -55,7 +55,7 @@ kk14_e1 <- structure(c(41L, 23L, 26L, 26L, 36L, 26L, 30L, 32L, 31L, 26L,
 colnames(kk14_e1) <-  c("rank1.w", "rank2.w", "rank3.w", "rank4.w", 
                         "rank1.s", "rank2.s", "rank3.s", "rank4.s")
 kk14_e1 <- kk14_e1 %>% 
-  mutate(subject = 1:n())
+  mutate(id = 1:n())
 
 
 #data from Kellen and Klauer Experiment 2
@@ -77,7 +77,7 @@ kk14_e2 <- structure(c(68L, 65L, 86L, 78L, 69L, 84L, 72L, 92L, 104L, 100L,
 colnames(kk14_e2) <-  c("rank1.w", "rank2.w", "rank3.w", 
                         "rank1.s", "rank2.s", "rank3.s")
 kk14_e2 <- kk14_e2 %>% 
-  mutate(subject = 1:n())
+  mutate(id = 1:n())
 
 
 
@@ -141,7 +141,7 @@ mg16_e1 <-  matrix(c(
 colnames(mg16_e1) <-  c("rank1.w", "rank2.w", "rank3.w", 
                         "rank1.s", "rank2.s", "rank3.s")
 mg16_e1 <- mg16_e1 %>% 
-  mutate(subject = 1:n())
+  mutate(id = 1:n())
 
 
 # McAdoo and Gronlund (2016, Exp. 2) 3 alternatives
@@ -266,5 +266,5 @@ mg16_e2 <- matrix(c(
 colnames(mg16_e2) <-  c("rank1.w", "rank2.w", "rank3.w", 
                         "rank1.s", "rank2.s", "rank3.s")
 mg16_e2 <- mg16_e2 %>% 
-  mutate(subject = 1:n())
+  mutate(id = 1:n())
 
