@@ -231,6 +231,101 @@ fit_kke2_uvsdt <- brm(
   )
 
 
+##-----------
+##  MG16 E1  
+##-----------
+#McAdoo and Gronlund (2016)
 
 mg16_e1
+mg16_e1_use <- mg16_e1 %>% 
+  pivot_longer(cols = rank1.w:rank3.s, 
+               names_to = c("rank", "strength"), names_sep = "\\.") %>% 
+  pivot_wider(names_from = rank, values_from = value) %>% 
+  mutate(strength = factor(strength, levels = c("w", "s")))
+
+fit_mge1_gumbel <- brm(
+    gumbel_formula_kke2, data = mg16_e1_use, 
+    stanvars = sv_gumbelrank3, 
+    prior = gumbel_priors,
+    init_r = 0.25
+    #control = list(adapt_delta = 0.99)
+  )
+fit_mge1_uvsdt <- brm(
+    uvsdt_formula_kke2, data = mg16_e1_use, 
+    stanvars = sv_uvsdtrank3, 
+    prior = uvsdt_priors,
+    init_r = 0.25
+    #control = list(adapt_delta = 0.99)
+  )
+
+
+##-----------
+##  MG16 E2  
+##-----------
+
 mg16_e2
+mg16_e2_use <- mg16_e2 %>% 
+  pivot_longer(cols = rank1.w:rank3.s, 
+               names_to = c("rank", "strength"), names_sep = "\\.") %>% 
+  pivot_wider(names_from = rank, values_from = value) %>% 
+  mutate(strength = factor(strength, levels = c("w", "s")))
+
+fit_mge2_gumbel <- brm(
+    gumbel_formula_kke2, data = mg16_e2_use, 
+    stanvars = sv_gumbelrank3, 
+    prior = gumbel_priors,
+    init_r = 0.25
+    #control = list(adapt_delta = 0.99)
+  )
+fit_mge2_uvsdt <- brm(
+    uvsdt_formula_kke2, data = mg16_e2_use, 
+    stanvars = sv_uvsdtrank3, 
+    prior = uvsdt_priors,
+    init_r = 0.25
+    #control = list(adapt_delta = 0.99)
+  )
+
+save(fit_kke2_gumbel, fit_kke2_uvsdt, 
+     fit_mge1_gumbel, fit_mge1_uvsdt,
+     fit_mge2_gumbel, fit_mge2_uvsdt, file = "fit-3rank.rda", compress = "xz")
+
+##-------------
+##  Exact LOO  
+##-------------
+
+library(future)
+plan(multisession, workers = 12)
+
+exloo_kke2_gumbel <- kfold(
+  x = fit_kke2_gumbel, group = "id", sample_new_levels = "uncertainty", 
+  future_args = list(future.globals = c("log_lik_gumbelrank3", "calc_posterior_predictions_gumbelrank3", 
+                                        "posterior_epred_gumbelrank3", "posterior_predict_gumbelrank3")))
+
+exloo_kke2_uvsdt <- kfold(
+  x = fit_kke2_uvsdt, group = "id", sample_new_levels = "uncertainty", 
+  future_args = list(future.globals = c("log_lik_uvsdtrank3", "calc_posterior_predictions_uvsdtrank3", 
+                                        "posterior_epred_uvsdtrank3", "posterior_predict_uvsdtrank3")))
+
+exloo_mge1_gumbel <- kfold(
+  x = fit_mge1_gumbel, group = "id", sample_new_levels = "uncertainty", 
+  future_args = list(future.globals = c("log_lik_gumbelrank3", "calc_posterior_predictions_gumbelrank3", 
+                                        "posterior_epred_gumbelrank3", "posterior_predict_gumbelrank3")))
+
+exloo_mge1_uvsdt <- kfold(
+  x = fit_mge1_uvsdt, group = "id", sample_new_levels = "uncertainty", 
+  future_args = list(future.globals = c("log_lik_uvsdtrank3", "calc_posterior_predictions_uvsdtrank3", 
+                                        "posterior_epred_uvsdtrank3", "posterior_predict_uvsdtrank3")))
+
+exloo_mge2_gumbel <- kfold(
+  x = fit_mge2_gumbel, group = "id", sample_new_levels = "uncertainty", 
+  future_args = list(future.globals = c("log_lik_gumbelrank3", "calc_posterior_predictions_gumbelrank3", 
+                                        "posterior_epred_gumbelrank3", "posterior_predict_gumbelrank3")))
+
+exloo_mge2_uvsdt <- kfold(
+  x = fit_mge2_uvsdt, group = "id", sample_new_levels = "uncertainty", 
+  future_args = list(future.globals = c("log_lik_uvsdtrank3", "calc_posterior_predictions_uvsdtrank3", 
+                                        "posterior_epred_uvsdtrank3", "posterior_predict_uvsdtrank3")))
+
+save(exloo_kke2_gumbel, exloo_kke2_uvsdt,
+     exloo_mge1_gumbel, exloo_mge1_uvsdt,
+     exloo_mge2_gumbel, exloo_mge2_uvsdt, file = "exloo_3rank.rda")
