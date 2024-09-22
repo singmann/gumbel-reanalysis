@@ -288,13 +288,14 @@ fit_mge2_uvsdt <- brm(
 save(fit_kke2_gumbel, fit_kke2_uvsdt, 
      fit_mge1_gumbel, fit_mge1_uvsdt,
      fit_mge2_gumbel, fit_mge2_uvsdt, file = "fit-3rank.rda", compress = "xz")
+load("fit-3rank.rda")
 
 ##-------------
 ##  Exact LOO  
 ##-------------
 
 library(future)
-plan(multisession, workers = 12)
+plan(multisession, workers = 16)
 
 exloo_kke2_gumbel <- kfold(
   x = fit_kke2_gumbel, group = "id", sample_new_levels = "uncertainty", 
@@ -326,6 +327,12 @@ exloo_mge2_uvsdt <- kfold(
   future_args = list(future.globals = c("log_lik_uvsdtrank3", "calc_posterior_predictions_uvsdtrank3", 
                                         "posterior_epred_uvsdtrank3", "posterior_predict_uvsdtrank3")))
 
+exloo_kke2 <- loo_compare(exloo_kke2_uvsdt, exloo_kke2_gumbel)
+exloo_mge1 <- loo_compare(exloo_mge1_uvsdt, exloo_mge1_gumbel)
+exloo_mge2 <- loo_compare(exloo_mge2_uvsdt, exloo_mge2_gumbel)
+
 save(exloo_kke2_gumbel, exloo_kke2_uvsdt,
      exloo_mge1_gumbel, exloo_mge1_uvsdt,
-     exloo_mge2_gumbel, exloo_mge2_uvsdt, file = "exloo_3rank.rda")
+     exloo_mge2_gumbel, exloo_mge2_uvsdt, 
+     exloo_kke2, exloo_mge1, exloo_mge2,
+     file = "exloo_3rank.rda")

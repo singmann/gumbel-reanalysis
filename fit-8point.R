@@ -100,6 +100,9 @@ roc8_fits_uvsdt <- vector("list", length(dataset8))
 roc8_exloo_gumbel <- vector("list", length(dataset8))
 roc8_exloo_uvsdt <- vector("list", length(dataset8))
 
+library(future)
+plan(multisession, workers = 16)
+
 start_time <- Sys.time()
 #i <- 1
 for (i in seq_along(dataset8)) {
@@ -133,7 +136,9 @@ for (i in seq_along(dataset8)) {
 end_time <- Sys.time()
 # Time difference
 time_elapsed <- end_time - start_time
-print(time_elapsed)
+print(time_elapsed) ## 5 days
+
+save(roc8_exloo_gumbel, roc8_exloo_uvsdt, file = "roc8-exloo.rda")
 
 exloo_8roc <- mapply(loo_compare, roc8_exloo_gumbel, roc8_exloo_uvsdt, SIMPLIFY = FALSE)
 tibble(
@@ -145,7 +150,12 @@ tibble(
   mutate(across(c(elpd_g, elpd_uv), ~ sprintf(.-max_elpd, fmt = '%#.1f'))) %>% 
   mutate(diff_SE = map_dbl(exloo_8roc, ~ .[2, "se_diff"])) %>% 
   mutate(diff_sig = map_lgl(exloo_8roc, ~ abs(.[2, "elpd_diff"]) > (2*.[2, "se_diff"])))
-
+# # A tibble: 3 × 6
+#   dataset           elpd_g elpd_uv max_elpd diff_SE diff_sig
+#   <chr>             <chr>  <chr>      <dbl>   <dbl> <lgl>   
+# 1 Benjamin_2013     0.0    -3.0      -3778.    11.4 FALSE   
+# 2 Onyper_2010-Pics  0.0    -77.0    -10221.    61.4 FALSE   
+# 3 Onyper_2010-Words 0.0    -61.4    -10351.    56.0 FALSE  
 
 
 # stancode(gumbel_formula, data = roc6_data[[i]], 
