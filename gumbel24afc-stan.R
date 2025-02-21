@@ -98,17 +98,18 @@ posterior_epred_gumbel24afc <- function(prep) {
   return(out)
 }
 
-posterior_predict_gumbel24afc <- function(i, prep, ...) {
-  p <- calc_posterior_predictions_gumbel24afc(i = i, prep = prep)
-  dvec <- c(prep$data$Y[i], prep$data$vint1[i], prep$data$vint2[i], 
-              prep$data$vint3[i])
-  
-  lout <- length(p)
-  out <- extraDistr::rmnom(n = rep(1, lout), size = sum(dvec), prob = p)  
-  colnames(out) <- c("R1", "R2", "R3", "R4")
-  #browser()
-  lapply(seq_len(nrow(out)), function(i) out[i,])
-  #apply(out, 1, function(x) list(x))
-  #out[,1]
-}
+## not yet implemented correctly
+# posterior_predict_gumbel24afc <- function(i, prep, ...) {
+#   p <- calc_posterior_predictions_gumbel24afc(i = i, prep = prep)
+#   dvec <- c(prep$data$Y[i], prep$data$vint1[i], prep$data$vint2[i], 
+#               prep$data$vint3[i])
+#   
+#   lout <- length(p)
+#   out <- extraDistr::rmnom(n = rep(1, lout), size = sum(dvec), prob = p)  
+#   colnames(out) <- c("R1", "R2", "R3", "R4")
+#   #browser()
+#   lapply(seq_len(nrow(out)), function(i) out[i,])
+#   #apply(out, 1, function(x) list(x))
+#   #out[,1]
+# }
 

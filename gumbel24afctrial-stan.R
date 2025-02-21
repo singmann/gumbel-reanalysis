@@ -63,8 +63,9 @@ sv_gumbel24afctrial <- stanvar(scode = gumbel24afctrial_stanvars, block = "funct
 calc_posterior_predictions_gumbel24afctrial <- function(i, prep) {
   mu <- brms::get_dpar(prep, "mu", i = i)
   OUTLEN <- length(mu)
+  afc <- prep$data$vint1[i]
   
-  p <- matrix(NA_real_, nrow = OUTLEN, ncol = 2)
+  p <- vector("numeric", OUTLEN)
   
   G4<-function(x, mu){
     ((ordinal::pgumbel(x, max = FALSE)^3)*ordinal::dgumbel(x, mu, max = FALSE))
@@ -74,45 +75,36 @@ calc_posterior_predictions_gumbel24afctrial <- function(i, prep) {
   }
   
   for (j in seq_len(OUTLEN)) {
-    p[j, 1] <- integrate(G2,-Inf,Inf, mu = -mu[j],
-                         rel.tol = .Machine$double.eps^0.5)$value
-    p[j, 2] <- integrate(G4,-Inf,Inf, mu = -mu[j],
-                         rel.tol = .Machine$double.eps^0.5)$value
+    if (afc == 2) {
+      p[j] <- integrate(G2,-Inf,Inf, mu = -mu[j],
+                           rel.tol = .Machine$double.eps^0.5)$value  
+    } else if (afc == 4) {
+      p[j] <- integrate(G4,-Inf,Inf, mu = -mu[j],
+                           rel.tol = .Machine$double.eps^0.5)$value
+    }
   }
   return(p)
 }
 
 log_lik_gumbel24afctrial <- function(i, prep) {
   p <- calc_posterior_predictions_gumbel24afctrial(i = i, prep = prep)
-  dvec <- c(prep$data$Y[i], prep$data$vint1[i], prep$data$vint2[i], 
-              prep$data$vint3[i])
-  dbinom(prep$data$Y[i], prep$data$vint1[i], p[,1], log = TRUE) + 
-    dbinom(prep$data$vint2[i], prep$data$vint3[i], p[,2], log = TRUE)
+  out <- p
+  out[prep$data$Y[i] == 0] <- 1 - p
+  log(out)
 }
 
 posterior_epred_gumbel24afctrial <- function(prep) {
   nobs <- prep$nobs
-  out <- array(NA_real_, dim = c(prep$ndraws, prep$nobs, 2), 
-               dimnames = list(seq(prep$ndraws), seq(prep$nobs), 
-                               c("AFC2", "AFC4")))
+  out <- matrix(NA_real_, nrow = prep$ndraws, ncol = prep$nobs)
   for (i in seq_len(nobs)) {
     tmp <- calc_posterior_predictions_gumbel24afctrial(i = i, prep = prep)
-    out[,i,] <- tmp
+    out[,i] <- tmp
   }
   return(out)
 }
 
 posterior_predict_gumbel24afctrial <- function(i, prep, ...) {
   p <- calc_posterior_predictions_gumbel24afctrial(i = i, prep = prep)
-  dvec <- c(prep$data$Y[i], prep$data$vint1[i], prep$data$vint2[i], 
-              prep$data$vint3[i])
-  
-  lout <- length(p)
-  out <- extraDistr::rmnom(n = rep(1, lout), size = sum(dvec), prob = p)  
-  colnames(out) <- c("R1", "R2", "R3", "R4")
-  #browser()
-  lapply(seq_len(nrow(out)), function(i) out[i,])
-  #apply(out, 1, function(x) list(x))
-  #out[,1]
+  rbinom(length(p), 1, p)
 }
 
