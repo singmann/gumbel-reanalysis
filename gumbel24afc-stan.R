@@ -98,7 +98,7 @@ posterior_epred_gumbel24afc <- function(prep) {
   return(out)
 }
 
-## not yet implemented correctly
+## not yet implemented
 # posterior_predict_gumbel24afc <- function(i, prep, ...) {
 #   p <- calc_posterior_predictions_gumbel24afc(i = i, prep = prep)
 #   dvec <- c(prep$data$Y[i], prep$data$vint1[i], prep$data$vint2[i], 

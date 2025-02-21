@@ -336,3 +336,48 @@ save(exloo_kke2_gumbel, exloo_kke2_uvsdt,
      exloo_mge2_gumbel, exloo_mge2_uvsdt, 
      exloo_kke2, exloo_mge1, exloo_mge2,
      file = "exloo_3rank.rda")
+
+
+load("exloo_4rank.rda")
+load("exloo_3rank.rda")
+
+rankloos_uvsdt <- list(
+  exloo_kke1_uvsdt,
+  exloo_kke2_uvsdt,
+  exloo_mge1_uvsdt,
+  exloo_mge2_uvsdt,
+  exloo_kks_uvsdt,
+  exloo_mhe1_uvsdt
+  )
+rankloos_gumbel <- list(
+  exloo_kke1_gumbel,
+  exloo_kke2_gumbel,
+  exloo_mge1_gumbel,
+  exloo_mge2_gumbel,
+  exloo_kks_gumbel,
+  exloo_mhe1_gumbel
+)
+
+exloo_rank <- list(
+  exloo_kke1, exloo_kke2, exloo_mge1, exloo_mge2, exloo_kks, exloo_mhe1
+)
+dnames <- c("kke1", "kke2", "mge1", "mge2", "kks", "mhe1")
+
+tibble(
+  dataset = dnames,
+  elpd_g = map_dbl(rankloos_gumbel, ~.$estimates["elpd_kfold","Estimate"]),
+  elpd_uv = map_dbl(rankloos_uvsdt, ~.$estimates["elpd_kfold","Estimate"]),
+) %>% 
+  mutate(max_elpd = pmax(elpd_g, elpd_uv)) %>% 
+  mutate(across(c(elpd_g, elpd_uv), ~ sprintf(.-max_elpd, fmt = '%#.1f'))) %>% 
+  mutate(diff_SE = map_dbl(exloo_rank, ~ .[2, "se_diff"])) %>% 
+  mutate(diff_sig = map_lgl(exloo_rank, ~ abs(.[2, "elpd_diff"]) > (2*.[2, "se_diff"])))
+# # A tibble: 6 × 6
+# dataset elpd_g elpd_uv max_elpd diff_SE diff_sig
+# <chr>   <chr>  <chr>      <dbl>   <dbl> <lgl>   
+# 1 kke1    0.0    -6.6       -370.    2.42 TRUE    
+# 2 kke2    0.0    -0.6       -310.    3.81 FALSE   
+# 3 mge1    0.0    -2.2       -573.    3.06 FALSE   
+# 4 mge2    0.0    -4.0      -1207.    5.15 FALSE   
+# 5 kks     0.0    -2.1       -271.    2.98 FALSE   
+# 6 mhe1    0.0    -3.2       -368.    2.53 FALSE   

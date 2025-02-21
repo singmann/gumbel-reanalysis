@@ -193,19 +193,19 @@ tibble(
   mutate(looic_diff_sig = map_lgl(loo_comp, ~ abs(.[2, "elpd_diff"]) > (2*.[2, "se_diff"])))
 # # A tibble: 12 × 6
 #    dataset             looic_g looic_uv min_waic looic_SE looic_diff_sig
-#    <chr>               <chr>   <chr>       <dbl>    <dbl> <lgl>         
-#  1 Dube_2012-P         " 7.2"  " 0.0"      1288.     6.92 FALSE         
-#  2 Dube_2012-W         " 0.0"  " 6.9"      1310.     4.90 FALSE         
-#  3 Heathcote_2006_e1   " 2.6"  " 0.0"      1082.     8.06 FALSE         
-#  4 Heathcote_2006_e2   "80.8"  " 0.0"      1485.    16.0  TRUE          
-#  5 Jaeger_2012         "90.5"  " 0.0"      2752.    12.3  TRUE          
-#  6 Jang_2009           " 0.0"  "18.7"      1654.     6.10 FALSE         
-#  7 Koen_2010_pure      " 0.0"  " 1.5"      1913.     9.01 FALSE         
-#  8 Koen_2011           "53.4"  " 0.0"      1315.    12.1  TRUE          
-#  9 Koen-2013_full      "13.7"  " 0.0"      2545.     7.44 FALSE         
-# 10 Koen-2013_immediate "15.8"  " 0.0"      2773.     7.47 FALSE         
-# 11 Pratte_2010         "74.7"  " 0.0"      6251.    16.6  TRUE          
-# 12 Smith_2004          "22.1"  " 0.0"      1489.     5.48 TRUE    
+#    <chr>               <chr>   <chr>       <dbl>    <dbl> <lgl>
+#  1 Dube_2012-P         " 7.2"  " 0.0"      1288.     6.92 FALSE
+#  2 Dube_2012-W         " 0.0"  " 6.9"      1310.     4.90 FALSE
+#  3 Heathcote_2006_e1   " 2.6"  " 0.0"      1082.     8.06 FALSE
+#  4 Heathcote_2006_e2   "80.8"  " 0.0"      1485.    16.0  TRUE
+#  5 Jaeger_2012         "90.5"  " 0.0"      2752.    12.3  TRUE
+#  6 Jang_2009           " 0.0"  "18.7"      1654.     6.10 FALSE
+#  7 Koen_2010_pure      " 0.0"  " 1.5"      1913.     9.01 FALSE
+#  8 Koen_2011           "53.4"  " 0.0"      1315.    12.1  TRUE
+#  9 Koen-2013_full      "13.7"  " 0.0"      2545.     7.44 FALSE
+# 10 Koen-2013_immediate "15.8"  " 0.0"      2773.     7.47 FALSE
+# 11 Pratte_2010         "74.7"  " 0.0"      6251.    16.6  TRUE
+# 12 Smith_2004          "22.1"  " 0.0"      1489.     5.48 TRUE
 
 ## plots
 plot_data <- roc6 %>% 

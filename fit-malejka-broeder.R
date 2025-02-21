@@ -168,6 +168,35 @@ exloo_bm_e3 <- loo_compare(exloo_mbfit_e3_gumbel, exloo_mbfit_e3_uvsd)
 # mbfit_e3_gumbel  0.0       0.0   
 # mbfit_e3_uvsd   -4.3       2.6   
 
+
+###
+binloos_uvsdt <- list(
+  exloo_mbfit_e1_uvsd, exloo_mbfit_e2_uvsd, exloo_mbfit_e3_uvsd
+)
+binloos_gumbel <- list(
+  exloo_mbfit_e1_gumbel, exloo_mbfit_e2_gumbel, exloo_mbfit_e3_gumbel
+)
+
+exloo_rank <- list(
+  exloo_bm_e1, exloo_bm_e2, exloo_bm_e3
+)
+dnames <- c("mb_e1", "mb_e2", "mb_e3")
+
+tibble(
+  dataset = dnames,
+  elpd_g = map_dbl(binloos_gumbel, ~.$estimates["elpd_kfold","Estimate"]),
+  elpd_uv = map_dbl(binloos_uvsdt, ~.$estimates["elpd_kfold","Estimate"]),
+) %>% 
+  mutate(max_elpd = pmax(elpd_g, elpd_uv)) %>% 
+  mutate(across(c(elpd_g, elpd_uv), ~ sprintf(.-max_elpd, fmt = '%#.1f'))) %>% 
+  mutate(diff_SE = map_dbl(exloo_rank, ~ .[2, "se_diff"])) %>% 
+  mutate(diff_sig = map_lgl(exloo_rank, ~ abs(.[2, "elpd_diff"]) > (2*.[2, "se_diff"])))
+# dataset elpd_g elpd_uv max_elpd diff_SE diff_sig
+# <chr>   <chr>  <chr>      <dbl>   <dbl> <lgl>   
+# 1 mb_e1   -8.3   0.0       -1008.    8.09 FALSE   
+# 2 mb_e2   -6.4   0.0        -829.    8.43 FALSE   
+# 3 mb_e3   -0.2   0.0        -637.    2.99 FALSE 
+
 # pptmp <- prepare_predictions(mbfit_e1_gumbel)
 # log_lik_gumbelbin(2, pptmp)
 # pptmp <- prepare_predictions(mbfit_e1_uvsd)
