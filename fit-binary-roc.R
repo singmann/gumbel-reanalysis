@@ -261,14 +261,14 @@ plot_dat_2 %>%
      name = '',
      breaks = c('Data', 'Gumbel', 'UVSD'),
      values = c('Data' = 'black', 'Gumbel' = 'blue', 'UVSD' = 'red'),
-     labels = c("Data", expression(Gumbel[min]), "UVSD")
+     labels = c("Data", expression(Gumbel[min]), "Gaussian")
    ) +
   scale_shape_manual(
      name = '',
      breaks = c('Data', 'Gumbel', 'UVSD'),
      values = c('Data' = 19, 'Gumbel' = 3, 'UVSD' = 2),
-     labels = c("Data", expression(Gumbel[min]), "UVSD")
+     labels = c("Data", expression(Gumbel[min]), "Gaussian")
    ) + 
   theme(legend.title = NULL) +
   labs(x = expression(italic(p)[FA]), y = expression(italic(p)[H]))
-ggsave("binroc-plot1.pdf", width = 22, height = 15, units = "cm")
+ggsave("binroc-plot1.pdf", width = 22, height = 14.5, units = "cm")
