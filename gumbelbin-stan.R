@@ -82,6 +82,9 @@ posterior_predict_gumbelbin <- function(i, prep, ...) {
   Nnew <- prep$data$vint3[i]
   
   lout <- nrow(use$pold)
+  if (is.null(lout)) {
+    lout <- length(use$pold)
+  }
   out <- cbind(old = rbinom(n = rep(1, lout), size = Nold, prob = use$pold), 
                new = rbinom(n = rep(1, lout), size = Nnew, prob = use$pnew))
   #browser()
