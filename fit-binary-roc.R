@@ -47,7 +47,7 @@ bdin_long <- bdin_long %>%
     labels = c("Broder E3", 
                "Dube E1-Pics", "Dube E1-Words", "Dube E2", 
                 "Malejka E1", "Malejka E2", "Malejka E3",
-               "Van Zandt E1-slow", "Van Zandt E1-fast", "Van Zandt E2")))
+               "Van Zandt E1-fast", "Van Zandt E1-slow", "Van Zandt E2")))
 
 dataset_all <- levels(bdin_long$exp)
 dataset_all <- dataset_all[-which(dataset_all %in% c("Malejka E1", "Malejka E3"))] 
@@ -80,13 +80,6 @@ rocbin_data <- vector("list", length(dataset_all))
 rocbin_fits_gumbel <- vector("list", length(dataset_all))
 rocbin_fits_uvsdt <- vector("list", length(dataset_all))
 
-rocbin_exloo_gumbel <- vector("list", length(dataset_all))
-rocbin_exloo_uvsdt <- vector("list", length(dataset_all))
-
-library(future)
-plan(multisession, workers = 12)
-
-start_time <- Sys.time()
 
 #set.seed(4567123)
 for (i in seq_along(dataset_all)) {
@@ -98,36 +91,19 @@ for (i in seq_along(dataset_all)) {
     gumbel_formula_2, data = rocbin_data[[i]], 
     stanvars = sv_gumbelbin ,
     prior = gumbel_priors,
-    init_r = 0.5
+    init_r = 0.5, 
+    control = list(adapt_delta = 0.99, max_treedepth = 20)
   )
-  rocbin_exloo_gumbel[[i]] <- kfold(
-    x = rocbin_fits_gumbel[[i]], group = "pid", sample_new_levels = "uncertainty", 
-    init_r = 0.5, warmup = 1000, iter = 16000,
-    joint = "group", 
-    future_args = list(future.globals = c("log_lik_gumbelbin",
-                                          "calc_posterior_predictions_gumbelbin", 
-                                          "posterior_epred_gumbelbin", "posterior_predict_gumbelbin"), 
-                       future.seed = TRUE))
-  
   rocbin_fits_uvsdt[[i]] <- brm(
     uvsdt_formula_2, data = rocbin_data[[i]], 
     stanvars = sv_uvsdtbin, 
     prior = uvsdt_priors,
-    init_r = 0.5
+    init_r = 0.5, 
+    control = list(adapt_delta = 0.99, max_treedepth = 20)
   )
-  rocbin_exloo_uvsdt[[i]] <- kfold(
-    x = rocbin_fits_uvsdt[[i]], group = "pid", sample_new_levels = "uncertainty",
-    init_r = 0.5, warmup = 1000, iter = 16000,
-    joint = "group",
-    future_args = list(future.globals = c("log_lik_uvsdtbin", "calc_posterior_predictions_uvsdtbin", 
-                                          "posterior_epred_uvsdtbin", "posterior_predict_uvsdtbin"),
-                       future.seed = TRUE))
-  
 }
-end_time <- Sys.time()
-# Time difference
-time_elapsed <- end_time - start_time
-print(time_elapsed)
+
+
 
 ### make plots
 
@@ -197,6 +173,18 @@ bin_comp
 # 6 Van Zandt E1-slow -1.0   0.0        -348.    9.30 FALSE   
 # 7 Van Zandt E1-fast -1.4   0.0        -316.    5.30 FALSE   
 # 8 Van Zandt E2      -2.0   0.0        -430.    7.40 FALSE   
+
+# # A tibble: 8 × 6
+# exp               elpd_g elpd_uv max_elpd diff_SE diff_sig
+# <chr>             <chr>  <chr>      <dbl>   <dbl> <lgl>   
+# 1 Broder E3         -2.0   0.0        -923.    1.92 FALSE   
+# 2 Dube E1-Pics      -18.6  0.0       -1107.   10.2  FALSE   
+# 3 Dube E1-Words     -4.5   0.0       -1110.    7.46 FALSE   
+# 4 Dube E2           -2.5   0.0        -846.    3.04 FALSE   
+# 5 Malejka E2        -46.0  0.0        -765.    8.94 TRUE    
+# 6 Van Zandt E1-slow 0.0    -3.7       -348.    7.82 FALSE   
+# 7 Van Zandt E1-fast -12.7  0.0        -306.    8.27 FALSE   
+# 8 Van Zandt E2      -3.9   0.0        -434.    5.22 FALSE   
 
 bin_n <- plot_dat %>% 
   group_by(exp) %>% 
