@@ -147,62 +147,11 @@ plot_dat_2 <- plot_dat %>%
 
 plot_data_bin <- plot_dat_2
 
-exloo_bin <- mapply(loo_compare, rocbin_exloo_gumbel, rocbin_exloo_uvsdt, SIMPLIFY = FALSE)
-save(plot_data_bin, exloo_bin, 
-     rocbin_exloo_gumbel, rocbin_exloo_uvsdt, 
-     file = "rocbin_exloo_res.rda")
-
-bin_comp <- tibble(
-  exp = dataset_all,
-  elpd_g = map_dbl(rocbin_exloo_gumbel, ~.$estimates["elpd_kfold","Estimate"]),
-  elpd_uv = map_dbl(rocbin_exloo_uvsdt, ~.$estimates["elpd_kfold","Estimate"]),
-) %>% 
-  mutate(max_elpd = pmax(elpd_g, elpd_uv)) %>% 
-  mutate(across(c(elpd_g, elpd_uv), ~ sprintf(.-max_elpd, fmt = '%#.1f'))) %>% 
-  mutate(diff_SE = map_dbl(exloo_bin, ~ .[2, "se_diff"])) %>% 
-  mutate(diff_sig = map_lgl(exloo_bin, ~ abs(.[2, "elpd_diff"]) > (2*.[2, "se_diff"])))
-bin_comp
-# # A tibble: 8 × 6 (15k per chain):
-# exp               elpd_g elpd_uv max_elpd diff_SE diff_sig
-# <chr>             <chr>  <chr>      <dbl>   <dbl> <lgl>   
-# 1 Broder E3         -2.8   0.0        -922.    2.22 FALSE   
-# 2 Dube E1-Pics      -22.8  0.0       -1105.    9.78 TRUE    
-# 3 Dube E1-Words     -4.5   0.0       -1108.    7.98 FALSE   
-# 4 Dube E2           0.0    -2.1       -846.    2.37 FALSE   
-# 5 Malejka E2        -45.2  0.0        -766.    7.72 TRUE    
-# 6 Van Zandt E1-slow -1.0   0.0        -348.    9.30 FALSE   
-# 7 Van Zandt E1-fast -1.4   0.0        -316.    5.30 FALSE   
-# 8 Van Zandt E2      -2.0   0.0        -430.    7.40 FALSE   
-
-# # A tibble: 8 × 6
-# exp               elpd_g elpd_uv max_elpd diff_SE diff_sig
-# <chr>             <chr>  <chr>      <dbl>   <dbl> <lgl>   
-# 1 Broder E3         -2.0   0.0        -923.    1.92 FALSE   
-# 2 Dube E1-Pics      -18.6  0.0       -1107.   10.2  FALSE   
-# 3 Dube E1-Words     -4.5   0.0       -1110.    7.46 FALSE   
-# 4 Dube E2           -2.5   0.0        -846.    3.04 FALSE   
-# 5 Malejka E2        -46.0  0.0        -765.    8.94 TRUE    
-# 6 Van Zandt E1-slow 0.0    -3.7       -348.    7.82 FALSE   
-# 7 Van Zandt E1-fast -12.7  0.0        -306.    8.27 FALSE   
-# 8 Van Zandt E2      -3.9   0.0        -434.    5.22 FALSE   
 
 bin_n <- plot_dat %>% 
   group_by(exp) %>% 
-  summarise(n = n_distinct(pid))
-
-bin_comp <- left_join(bin_comp, bin_n)
-
-bin_comp <- bin_comp %>% 
-  mutate(
-    n_text = paste0("italic(N) == ", n),
-    elpd_diff = paste0(
-      if_else(diff_sig, "bold(", ""), 
-      "paste(Δ[ELPD] == '", 
-      if_else(elpd_g == "0.0", str_replace(elpd_uv, "-", "+") , elpd_g),
-      "', ' (±", sprintf(diff_SE, fmt = '%#.1f'), ")'",
-      if_else(diff_sig, ",'*'))", ")")
-    )
-  )
+  summarise(n = n_distinct(pid)) %>% 
+  mutate(n_text = paste0("italic(N) == ", n))
 
 library(showtext)
 font_paths("fonts")
@@ -236,10 +185,7 @@ plot_dat_2 %>%
   geom_point(aes(x = fa_uvsd, y = hit_uvsd, 
                  shape = "UVSD", colour = "UVSD"), size = psize) + 
   geom_label(mapping = aes(x = 0.55, y = 0.45, label = n_text), 
-             data = bin_comp, hjust = "left", vjust = "top", parse = TRUE,
-             family = "Palatino Linotype") +
-  geom_label(mapping = aes(x = 0.2, y = 0.15, label = elpd_diff), 
-             data = bin_comp, hjust = "left", vjust = "top", parse = TRUE,
+             data = bin_n, hjust = "left", vjust = "top", parse = TRUE,
              family = "Palatino Linotype") +
   coord_fixed(xlim = c(0, 1), ylim = c(0, 1), expand = FALSE) +
   scale_x_continuous(breaks = c(0, 0.5, 1), labels = c("0", ".5", "1")) +
@@ -248,7 +194,7 @@ plot_dat_2 %>%
   scale_color_manual(
      name = '',
      breaks = c('Data', 'Gumbel', 'UVSD'),
-     values = c('Data' = 'black', 'Gumbel' = 'blue', 'UVSD' = 'red'),
+     values = c('Data' = 'black', 'Gumbel' = "#E69F00", 'UVSD' = "#56B4E9"),
      labels = c("Data", expression(Gumbel[min]), "Gaussian")
    ) +
   scale_shape_manual(
