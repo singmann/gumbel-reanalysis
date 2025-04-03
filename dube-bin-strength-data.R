@@ -1,0 +1,129 @@
+dmat1 <- structure(c(33L, 35L, 35L, 32L, 34L, 34L, 36L, 36L, 23L, 36L,
+30L, 34L, 36L, 29L, 35L, 36L, 29L, 34L, 32L, 35L, 33L, 3L, 1L,
+1L, 4L, 2L, 2L, 0L, 0L, 5L, 0L, 5L, 1L, 0L, 6L, 1L, 0L, 7L, 2L,
+4L, 0L, 3L, 30L, 32L, 30L, 30L, 30L, 30L, 29L, 27L, 27L, 32L,
+27L, 29L, 29L, 27L, 23L, 32L, 19L, 28L, 26L, 32L, 29L, 2L, 0L,
+2L, 1L, 2L, 2L, 2L, 5L, 5L, 0L, 5L, 3L, 3L, 5L, 4L, 0L, 12L,
+4L, 6L, 0L, 3L, 22L, 18L, 23L, 22L, 19L, 21L, 23L, 21L, 16L,
+20L, 21L, 21L, 22L, 22L, 14L, 21L, 19L, 19L, 17L, 23L, 23L, 2L,
+6L, 1L, 2L, 5L, 3L, 1L, 3L, 8L, 4L, 2L, 3L, 2L, 1L, 6L, 3L, 5L,
+5L, 7L, 1L, 1L, 12L, 15L, 16L, 15L, 15L, 13L, 14L, 16L, 9L, 14L,
+12L, 13L, 14L, 15L, 14L, 15L, 13L, 14L, 10L, 14L, 14L, 4L, 1L,
+0L, 0L, 1L, 3L, 2L, 0L, 7L, 2L, 3L, 3L, 2L, 1L, 2L, 1L, 3L, 2L,
+6L, 2L, 2L, 7L, 10L, 12L, 9L, 12L, 8L, 11L, 9L, 12L, 11L, 10L,
+8L, 12L, 6L, 7L, 11L, 6L, 10L, 11L, 9L, 11L, 5L, 2L, 0L, 3L,
+0L, 4L, 1L, 3L, 0L, 1L, 2L, 4L, 0L, 6L, 5L, 1L, 6L, 2L, 1L, 2L,
+1L, 21L, 24L, 26L, 25L, 23L, 22L, 28L, 26L, 20L, 31L, 29L, 27L,
+24L, 28L, 28L, 28L, 25L, 23L, 19L, 29L, 31L, 13L, 12L, 10L, 11L,
+13L, 13L, 6L, 10L, 9L, 5L, 7L, 9L, 11L, 7L, 6L, 8L, 11L, 13L,
+14L, 3L, 5L, 25L, 20L, 19L, 20L, 22L, 24L, 24L, 23L, 26L, 23L,
+23L, 23L, 26L, 25L, 22L, 26L, 19L, 25L, 15L, 25L, 20L, 7L, 11L,
+13L, 12L, 10L, 8L, 8L, 9L, 6L, 9L, 9L, 9L, 6L, 5L, 7L, 6L, 12L,
+7L, 16L, 5L, 12L, 16L, 15L, 14L, 16L, 16L, 16L, 17L, 17L, 16L,
+16L, 14L, 20L, 15L, 16L, 9L, 14L, 15L, 18L, 13L, 18L, 16L, 8L,
+9L, 10L, 8L, 8L, 8L, 7L, 7L, 8L, 8L, 9L, 4L, 8L, 8L, 9L, 10L,
+9L, 6L, 11L, 6L, 8L, 5L, 8L, 11L, 6L, 9L, 11L, 8L, 14L, 5L, 9L,
+8L, 4L, 10L, 7L, 14L, 8L, 8L, 12L, 8L, 11L, 11L, 11L, 8L, 5L,
+10L, 7L, 5L, 8L, 2L, 11L, 7L, 8L, 12L, 6L, 9L, 2L, 8L, 8L, 4L,
+8L, 5L, 5L, 3L, 5L, 6L, 4L, 7L, 6L, 9L, 8L, 7L, 6L, 6L, 4L, 10L,
+3L, 7L, 6L, 3L, 4L, 4L, 8L, 8L, 9L, 7L, 6L, 8L, 5L, 6L, 2L, 3L,
+5L, 6L, 6L, 8L, 2L, 9L, 5L, 6L, 9L, 8L, 8L, 4L, 4L, 7L, 7L, 4L,
+7L, 9L, 9L, 12L, 14L, 15L, 1L, 13L, 6L, 4L, 11L, 8L, 5L, 7L,
+3L, 5L, 5L, 10L, 17L, 17L, 20L, 17L, 15L, 14L, 12L, 10L, 7L,
+23L, 11L, 18L, 17L, 13L, 16L, 19L, 17L, 21L, 19L, 18L, 14L, 11L,
+2L, 4L, 3L, 5L, 11L, 7L, 10L, 16L, 8L, 9L, 12L, 8L, 20L, 11L,
+9L, 17L, 3L, 4L, 4L, 6L, 19L, 26L, 28L, 28L, 27L, 21L, 25L, 22L,
+16L, 24L, 23L, 20L, 23L, 10L, 19L, 20L, 15L, 29L, 27L, 25L, 26L,
+26L, 13L, 4L, 4L, 7L, 21L, 13L, 11L, 8L, 3L, 14L, 7L, 16L, 6L,
+11L, 8L, 12L, 8L, 10L, 7L, 8L, 22L, 35L, 42L, 43L, 41L, 27L,
+35L, 37L, 40L, 45L, 34L, 39L, 30L, 39L, 29L, 40L, 35L, 40L, 37L,
+39L, 40L, 16L, 10L, 3L, 3L, 12L, 11L, 9L, 11L, 14L, 6L, 5L, 2L,
+20L, 11L, 8L, 3L, 7L, 13L, 7L, 4L, 4L, 48L, 54L, 61L, 59L, 52L,
+53L, 51L, 49L, 49L, 58L, 55L, 61L, 44L, 53L, 55L, 61L, 56L, 49L,
+57L, 59L, 58L, 9L, 12L, 8L, 7L, 6L, 18L, 13L, 11L, 0L, 4L, 6L,
+8L, 6L, 5L, 4L, 7L, 5L, 4L, 18L, 2L, 3L, 63L, 60L, 64L, 64L,
+66L, 54L, 56L, 60L, 71L, 68L, 64L, 64L, 66L, 67L, 68L, 65L, 67L,
+68L, 52L, 69L, 69L), .Dim = c(21L, 30L))
+
+
+
+
+dmat2 <- structure(c(32L, 36L, 31L, 35L, 30L, 35L, 35L, 29L, 33L, 34L,
+31L, 33L, 34L, 35L, 30L, 35L, 36L, 26L, 31L, 34L, 33L, 33L, 29L,
+32L, 28L, 33L, 2L, 0L, 3L, 1L, 2L, 1L, 1L, 7L, 1L, 1L, 5L, 3L,
+2L, 1L, 4L, 1L, 0L, 9L, 3L, 1L, 2L, 1L, 6L, 2L, 8L, 3L, 31L,
+30L, 26L, 31L, 29L, 31L, 23L, 24L, 28L, 30L, 26L, 30L, 29L, 28L,
+26L, 29L, 30L, 21L, 31L, 31L, 31L, 29L, 22L, 31L, 26L, 29L, 1L,
+2L, 6L, 1L, 3L, 1L, 6L, 8L, 3L, 2L, 5L, 2L, 3L, 3L, 6L, 3L, 2L,
+11L, 1L, 1L, 1L, 3L, 10L, 1L, 6L, 3L, 23L, 21L, 21L, 21L, 22L,
+19L, 24L, 18L, 23L, 20L, 22L, 24L, 20L, 19L, 18L, 21L, 24L, 17L,
+20L, 17L, 23L, 19L, 17L, 20L, 11L, 24L, 1L, 2L, 3L, 3L, 2L, 5L,
+0L, 6L, 1L, 4L, 2L, 0L, 4L, 1L, 6L, 3L, 0L, 7L, 4L, 5L, 1L, 5L,
+7L, 4L, 12L, 0L, 14L, 13L, 15L, 13L, 13L, 10L, 11L, 13L, 15L,
+13L, 15L, 14L, 15L, 11L, 8L, 15L, 16L, 14L, 13L, 7L, 14L, 13L,
+5L, 13L, 5L, 12L, 2L, 3L, 0L, 2L, 3L, 6L, 5L, 3L, 1L, 3L, 1L,
+2L, 0L, 4L, 8L, 1L, 0L, 1L, 3L, 7L, 1L, 2L, 11L, 3L, 11L, 4L,
+8L, 8L, 7L, 11L, 10L, 10L, 11L, 7L, 11L, 5L, 9L, 9L, 6L, 9L,
+1L, 11L, 9L, 8L, 9L, 6L, 12L, 5L, 9L, 9L, 3L, 7L, 3L, 4L, 5L,
+0L, 1L, 2L, 1L, 5L, 1L, 6L, 3L, 3L, 6L, 2L, 10L, 1L, 3L, 4L,
+2L, 6L, 0L, 7L, 3L, 2L, 9L, 5L, 32L, 24L, 21L, 26L, 28L, 26L,
+27L, 32L, 25L, 28L, 23L, 19L, 29L, 23L, 28L, 24L, 24L, 18L, 23L,
+28L, 25L, 29L, 30L, 26L, 20L, 19L, 5L, 11L, 14L, 10L, 9L, 10L,
+9L, 4L, 6L, 8L, 13L, 17L, 7L, 12L, 9L, 12L, 12L, 18L, 14L, 8L,
+11L, 6L, 5L, 10L, 16L, 17L, 27L, 16L, 21L, 18L, 29L, 22L, 15L,
+21L, 19L, 26L, 15L, 21L, 26L, 19L, 25L, 24L, 24L, 12L, 19L, 23L,
+23L, 25L, 17L, 21L, 9L, 21L, 5L, 16L, 11L, 14L, 3L, 9L, 14L,
+11L, 13L, 6L, 15L, 11L, 6L, 13L, 7L, 7L, 8L, 20L, 12L, 8L, 9L,
+7L, 15L, 11L, 21L, 11L, 20L, 11L, 17L, 15L, 20L, 8L, 16L, 13L,
+14L, 18L, 13L, 10L, 20L, 12L, 13L, 19L, 15L, 4L, 16L, 14L, 15L,
+20L, 14L, 17L, 12L, 13L, 4L, 9L, 7L, 9L, 4L, 16L, 7L, 11L, 10L,
+6L, 11L, 13L, 4L, 12L, 11L, 4L, 8L, 19L, 8L, 8L, 8L, 4L, 10L,
+7L, 12L, 9L, 9L, 7L, 14L, 11L, 11L, 8L, 9L, 6L, 11L, 8L, 8L,
+9L, 11L, 7L, 8L, 12L, 11L, 12L, 7L, 3L, 8L, 11L, 4L, 7L, 7L,
+5L, 8L, 7L, 2L, 5L, 6L, 8L, 7L, 10L, 5L, 9L, 8L, 7L, 5L, 9L,
+9L, 4L, 5L, 4L, 10L, 12L, 8L, 5L, 12L, 10L, 9L, 10L, 3L, 7L,
+3L, 10L, 4L, 2L, 6L, 2L, 5L, 4L, 8L, 4L, 4L, 9L, 2L, 6L, 5L,
+5L, 2L, 4L, 9L, 5L, 2L, 0L, 0L, 5L, 9L, 5L, 9L, 2L, 8L, 10L,
+6L, 10L, 6L, 8L, 4L, 8L, 8L, 3L, 10L, 6L, 7L, 7L, 10L, 8L, 3L,
+6L, 9L, 12L, 12L, 7L, 5L, 3L, 9L, 7L, 0L, 12L, 10L, 14L, 18L,
+3L, 5L, 7L, 16L, 14L, 9L, 10L, 4L, 2L, 6L, 14L, 4L, 17L, 15L,
+9L, 12L, 4L, 17L, 21L, 15L, 16L, 19L, 12L, 14L, 10L, 4L, 20L,
+18L, 17L, 8L, 10L, 13L, 14L, 20L, 22L, 18L, 10L, 20L, 7L, 9L,
+13L, 12L, 20L, 7L, 9L, 6L, 3L, 13L, 12L, 15L, 15L, 9L, 8L, 4L,
+12L, 18L, 15L, 20L, 7L, 5L, 6L, 13L, 11L, 3L, 17L, 18L, 11L,
+5L, 4L, 25L, 23L, 26L, 29L, 19L, 20L, 16L, 17L, 23L, 24L, 28L,
+20L, 14L, 16L, 12L, 25L, 27L, 26L, 19L, 21L, 29L, 15L, 13L, 21L,
+27L, 28L, 7L, 2L, 16L, 3L, 9L, 8L, 6L, 20L, 4L, 4L, 3L, 2L, 25L,
+7L, 23L, 23L, 7L, 14L, 11L, 15L, 3L, 24L, 23L, 13L, 13L, 3L,
+41L, 44L, 32L, 45L, 39L, 40L, 42L, 28L, 43L, 44L, 45L, 45L, 23L,
+37L, 25L, 25L, 40L, 34L, 37L, 31L, 43L, 23L, 25L, 35L, 35L, 45L,
+6L, 3L, 7L, 1L, 10L, 15L, 8L, 4L, 4L, 5L, 4L, 2L, 22L, 11L, 8L,
+16L, 3L, 5L, 7L, 13L, 5L, 17L, 16L, 5L, 16L, 1L, 57L, 60L, 55L,
+63L, 53L, 48L, 56L, 60L, 59L, 58L, 60L, 62L, 42L, 49L, 54L, 48L,
+61L, 58L, 56L, 38L, 59L, 46L, 48L, 57L, 48L, 62L, 8L, 5L, 3L,
+15L, 6L, 8L, 12L, 8L, 10L, 3L, 2L, 3L, 8L, 11L, 14L, 10L, 7L,
+3L, 3L, 10L, 3L, 5L, 19L, 2L, 5L, 3L, 65L, 67L, 69L, 52L, 67L,
+64L, 60L, 64L, 60L, 70L, 70L, 69L, 62L, 55L, 59L, 62L, 65L, 69L,
+70L, 62L, 69L, 67L, 50L, 71L, 66L, 69L), .Dim = c(26L, 30L))
+
+
+library("tidyverse")
+
+dbin_dube <- rbind(dmat1,dmat2) 
+colnames(dbin_dube) <- as.vector(t(outer(as.vector(t(outer(c("S", "W", "N"), 1:5, paste0))), c("O", "N"), paste0)))
+dbin_dube <- dbin_dube %>% 
+  as_tibble(dbin_dube)
+dbin_dube$pid <- paste(rep(c("E1P","E2P"),c(21,26)),c(1:21,1:26),sep="")
+dbin_dube <- dbin_dube %>% 
+  mutate(exp = substr(pid, 1, 2)) %>% 
+  mutate(pid = substr(pid, 3, 10)) %>% 
+  select(exp, pid, everything()) 
+  
+dbin_dube <- dbin_dube %>% 
+  pivot_longer(cols = S1O:N5N) %>% 
+  mutate(strength  = substr(name, 1, 1),
+         baserate = substr(name, 2, 2), 
+         type = substr(name, 3, 3)) %>% 
+  select(-name) %>% 
+  pivot_wider(names_from = type, values_from = value)
+

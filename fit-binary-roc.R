@@ -44,24 +44,27 @@ bdin_long <- bdin_long %>%
                "Dube E1 pictures", "Dube E1 word", "Dube E2", 
                 "e1", "Malejka_e2", "e3",
                "Van Zandt E1 slow", "Van Zandt E1 fast", "Van Zandt E2"), 
-    labels = c("Broder E3", 
-               "Dube E1-Pics", "Dube E1-Words", "Dube E2", 
-                "Malejka E1", "Malejka E2", "Malejka E3",
-               "Van Zandt E1-fast", "Van Zandt E1-slow", "Van Zandt E2")))
+    labels = c("Broder (2009, E3)", 
+               "Dube (2012, E1a-P)", "Dube (2012, E1a-W)", "Dube (2012, E2)", 
+                "Malejka (2019, E1)", "Malejka (2019, E2)", "Malejka (2019, E3)",
+               "Van Zandt (2000, E1-F)", "Van Zandt (2000, E1-S)", 
+               "Van Zandt (2000, E2)")))
 
 dataset_all <- levels(bdin_long$exp)
-dataset_all <- dataset_all[-which(dataset_all %in% c("Malejka E1", "Malejka E3"))] 
+dataset_all <- dataset_all[-which(dataset_all %in% c("Malejka (2019, E1)", 
+                                                     "Malejka (2019, E3)"))] 
 
 gumbel_formula_2 <- brmsformula(
   hit | vint(Nold, fa, Nnew) ~ 1 + (1|p|pid), 
   cr ~ 0 + baserate + (0 + baserate|p|pid),
-  family = gumbelbin_family, cmc = FALSE
+  family = gumbelbin_family, cmc = TRUE
 )
 
-get_prior(gumbel_formula_2, data = bdin_long)
+get_prior(gumbel_formula_2, 
+          data = filter(bdin_long, exp == dataset_all[[1]]))
 
-gumbel_priors <- prior(normal(0,0.5), class = b, dpar = "cr") + 
-  prior(student_t(3, 1, 2), class = Intercept)
+gumbel_priors <- prior(student_t(3, 1, 2), class = Intercept)
+## prior(normal(0,0.5), class = b, dpar = "cr") + 
 
 uvsdt_formula_2 <- brmsformula(
   hit | vint(Nold, fa, Nnew) ~ 1 + (1|p|pid), 
@@ -70,9 +73,9 @@ uvsdt_formula_2 <- brmsformula(
   family = uvsdtbin_family, cmc = FALSE
 )
 
-uvsdt_priors <- prior(normal(0,0.5), class = b, dpar = "cr") + 
-  prior(student_t(3, 1, 2), class = Intercept) +
+uvsdt_priors <- prior(student_t(3, 1, 2), class = Intercept) +
   prior(student_t(3, 0.5, 1), class = Intercept, dpar = "discsignal")
+# prior(normal(0,0.5), class = b, dpar = "cr") + 
 
 
 rocbin_data <- vector("list", length(dataset_all))
@@ -184,8 +187,8 @@ plot_dat_2 %>%
                  shape = "Gumbel", colour = "Gumbel"), size = psize) +
   geom_point(aes(x = fa_uvsd, y = hit_uvsd, 
                  shape = "UVSD", colour = "UVSD"), size = psize) + 
-  geom_label(mapping = aes(x = 0.55, y = 0.45, label = n_text), 
-             data = bin_n, hjust = "left", vjust = "top", parse = TRUE,
+  geom_label(mapping = aes(x = 0.75, y = 0.15, label = n_text), 
+             data = bin_n, hjust = "center", vjust = "top", parse = TRUE,
              family = "Palatino Linotype") +
   coord_fixed(xlim = c(0, 1), ylim = c(0, 1), expand = FALSE) +
   scale_x_continuous(breaks = c(0, 0.5, 1), labels = c("0", ".5", "1")) +
