@@ -179,7 +179,9 @@ plot_dat_2 %>%
   ggplot(aes(x =  fa, y = hit)) +
   geom_abline(slope = -1, intercept = 1, linetype = 2) +
   annotate(geom = "polygon", 
-           x = c(-Inf, Inf, Inf), y = c(-Inf, Inf, -Inf), fill = "grey")+
+           x = c(-Inf, Inf, Inf), y = c(-Inf, Inf, -Inf), fill = "white") +
+  annotate(geom = "polygon", 
+           x = c(-Inf, Inf, Inf), y = c(-Inf, Inf, -Inf), fill = rgb(0.7, 0.7, 0.7, alpha = 0.4)) +
   geom_abline(slope = 1, intercept = 0, linetype = 2) +
   geom_line(aes(group = 1), linewidth = lsize) +
   geom_point(size = psize, aes(shape = "Data", colour = "Data")) +
@@ -195,17 +197,17 @@ plot_dat_2 %>%
   scale_y_continuous(breaks = c(0, 0.5, 1), labels = c("0", ".5", "1")) +
   facet_wrap(vars(exp), nrow = 2) + 
   scale_color_manual(
-     name = '',
-     breaks = c('Data', 'Gumbel', 'UVSD'),
-     values = c('Data' = 'black', 'Gumbel' = "#E69F00", 'UVSD' = "#56B4E9"),
-     labels = c("Data", expression(Gumbel[min]), "Gaussian")
-   ) +
+    name = '',
+    breaks = c('Data', 'UVSD', 'Gumbel'),
+    values = c('Data' = 'black', 'UVSD' = "#0072B2", 'Gumbel' = "#E69F00"),
+    labels = c("Data", "Gaussian", expression(Gumbel[min]))
+  ) +
   scale_shape_manual(
-     name = '',
-     breaks = c('Data', 'Gumbel', 'UVSD'),
-     values = c('Data' = 19, 'Gumbel' = 3, 'UVSD' = 2),
-     labels = c("Data", expression(Gumbel[min]), "Gaussian")
-   ) + 
+    name = '',
+    breaks = c('Data', 'UVSD', 'Gumbel'),
+    values = c('Data' = 19, 'Gumbel' = 3, 'UVSD' = 5),
+    labels = c("Data", "Gaussian", expression(Gumbel[min]))
+  ) + 
   theme(legend.title = NULL) +
   labs(x = expression(italic(p)[FA]), y = expression(italic(p)[H]))
 ggsave("binroc-plot1.pdf", width = 22, height = 14.5, units = "cm")
