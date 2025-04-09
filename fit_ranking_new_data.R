@@ -541,6 +541,14 @@ p2b <- plrd2 %>%
 #plot_annotation(tag_levels = list(c("A", "", "B")))
 ggsave("rank-plot-4a.pdf", width = 19, height = 12, units = "cm")
 
+plrd3 <- plrd3 %>% 
+  mutate(newexp2 = factor(maxrank, 
+                          levels = as.character(3:5), 
+                          labels = c("italic(K) == 3", 
+                                     "italic(K) == 4",
+                                     "italic(K) == 5")
+                          ))
+
 p3b_1 <- plrd3 %>%
   filter(maxrank == 3) %>% 
   ggplot(aes(x = rank, y = prob)) +
@@ -559,7 +567,8 @@ p3b_1 <- plrd3 %>%
              vjust = 1.2,
              parse = TRUE, family = "Palatino Linotype") +
   #facet_wrap(vars(newexp), ncol = 1, dir = "v", scales = "free_y") +
-  facet_wrap(vars(newexp), nrow = 1, dir = "v", scales = "free_x") + 
+  facet_wrap(vars(newexp2), nrow = 1, dir = "v", scales = "free_x", 
+             labeller = "label_parsed") + 
   scale_color_manual(
     name = '',
     breaks = c('Data', 'UVSD', 'Gumbel'),
@@ -594,7 +603,8 @@ p3b_2 <- plrd3 %>%
   geom_point(aes(y = uvsd, 
                  shape = "UVSD", colour = "UVSD"), size = psize) + 
   #facet_wrap(vars(newexp), ncol = 1, dir = "v", scales = "free_y") +
-  facet_wrap(vars(newexp), nrow = 1, dir = "v", scales = "free_x") + 
+  facet_wrap(vars(newexp2), nrow = 1, dir = "v", scales = "free_x", 
+             labeller = "label_parsed") + 
   scale_color_manual(
     name = '',
     breaks = c('Data', 'UVSD', 'Gumbel'),
@@ -630,7 +640,9 @@ p3b_3 <- plrd3 %>%
   geom_point(aes(y = uvsd, 
                  shape = "UVSD", colour = "UVSD"), size = psize) + 
   #facet_wrap(vars(newexp), ncol = 1, dir = "v", scales = "free_y") +
-  facet_wrap(vars(newexp), nrow = 1, dir = "v", scales = "free_x") + 
+  #facet_wrap(vars(newexp), nrow = 1, dir = "v", scales = "free_x") + 
+  facet_wrap(vars(newexp2), nrow = 1, dir = "v", scales = "free_x", 
+             labeller = "label_parsed") + 
   scale_color_manual(
     name = '',
     breaks = c('Data', 'UVSD', 'Gumbel'),

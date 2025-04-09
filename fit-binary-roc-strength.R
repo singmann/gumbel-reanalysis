@@ -198,4 +198,4 @@ plot_dat_2 %>%
   theme(legend.title = NULL) +
   labs(x = expression(italic(p)[FA]), y = expression(italic(p)[H]))
 ggsave("binstrengthroc-plot1.pdf", 
-       width = 9, height = 18.75, units = "cm")
+       width = 8.1, height = 13.5, units = "cm")
