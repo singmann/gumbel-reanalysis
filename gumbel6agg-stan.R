@@ -1,9 +1,6 @@
+source("gumbelmin_dist-stan.R")
+## cat(gumbelmin_dist)
 gumbel6agg_stanvars <- "
-   real gumbelmin(real x, real mu, real disc){
-     //return 1- exp(-exp(-(-x-mu)/disc));
-     //return exp(gumbel_lccdf(-x | mu,disc));
-     return 1 - gumbel_cdf(-x|mu,disc);
-   }
    real gumbel6agg_lpmf(int y, real mu, 
                    real crc, real crlm, real crll, real crhm, real crhh, 
                    int y1, int y2, int y3, int y4, int y5, 
@@ -13,28 +10,27 @@ gumbel6agg_stanvars <- "
     vector[nthres+1] pnew;
     array[6] int oldvec = { y, y1, y2, y3, y4, y5 };
     array[6] int newvec = { y6, y7, y8, y9, y10, y11 };
-    
-    real disc = 1;
+
     vector[nthres] thres;
     
     // calculate thresholds
-    thres[1] = crc - (exp(crlm) + exp(crll));
-    thres[2] = crc - (exp(crlm));
+    thres[1] = crc - (crlm + crll);
+    thres[2] = crc - (crlm);
     thres[3] = crc;
-    thres[4] = crc + (exp(crhm));
-    thres[5] = crc + (exp(crhm) + exp(crhh));
+    thres[4] = crc + (crhm);
+    thres[5] = crc + (crhm + crhh);
      
     // calculate probabilities
-    pold[1] = gumbelmin(thres[1], -mu, disc);
+    pold[1] = gumbelmin_cdf(thres[1], mu);
     for (i in 2:nthres) {
-      pold[i] = gumbelmin(thres[i], -mu, disc) - gumbelmin(thres[i-1], -mu, disc);
+      pold[i] = gumbelmin_cdf(thres[i], mu) - gumbelmin_cdf(thres[i-1], mu);
     }
-    pold[6] = 1 - gumbelmin(thres[nthres], -mu, disc);
-    pnew[1] = gumbelmin(thres[1], 0, disc);
+    pold[6] = 1 - gumbelmin_cdf(thres[nthres], mu);
+    pnew[1] = gumbelmin_cdf(thres[1], 0);
     for (i in 2:nthres) {
-      pnew[i] = gumbelmin(thres[i], 0, disc) - gumbelmin(thres[i-1], 0, disc);
+      pnew[i] = gumbelmin_cdf(thres[i], 0) - gumbelmin_cdf(thres[i-1], 0);
     }
-    pnew[6] = 1 - gumbelmin(thres[nthres], 0, disc);
+    pnew[6] = 1 - gumbelmin_cdf(thres[nthres], 0);
     return multinomial_lpmf(oldvec | pold) + multinomial_lpmf(newvec | pnew);
    }
 "
@@ -42,17 +38,19 @@ gumbel6agg_stanvars <- "
 gumbel6agg_family <- custom_family(
   name = "gumbel6agg", 
   dpars = c("mu", "crc", "crlm", "crll", "crhm", "crhh"), 
-  links = c("identity", rep("identity", 5)), lb = c(NA, rep(NA, 5)),
+  links = c("identity", "identity", rep("log", 4)), 
+  lb = c(NA, NA, rep(0, 4)),
   type = "int", vars = paste0("vint", 1:11, "[n]")
 )
 
-sv_gumbel6agg <- stanvar(scode = gumbel6agg_stanvars, block = "functions")
+sv_gumbel6agg <- stanvar(scode = gumbelmin_dist, block = "functions") + 
+  stanvar(scode = gumbel6agg_stanvars, block = "functions")
 
 calc_posterior_predictions_gumbel6agg <- function(i, prep) {
   gumbelmin <- function(x, mu, disc) {
-    return(1 - extraDistr::pgumbel(-x,mu,disc))
+    return(1 - extraDistr::pgumbel(-x,-mu,disc))
   }
-  mu <- -brms::get_dpar(prep, "mu", i = i)
+  mu <- brms::get_dpar(prep, "mu", i = i)
   #discsignal <- brms::get_dpar(prep, "discsignal", i = i)
   crc <- brms::get_dpar(prep, "crc", i = i)
   crlm <- brms::get_dpar(prep, "crlm", i = i)
@@ -68,11 +66,11 @@ calc_posterior_predictions_gumbel6agg <- function(i, prep) {
   pold <- matrix(NA_real_, nrow = OUTLEN, ncol = nthres+1)
   pnew <- matrix(NA_real_, nrow = OUTLEN, ncol = nthres+1)
   
-  thres[,1] = crc - (exp(crlm) + exp(crll));
-  thres[,2] = crc - (exp(crlm));
+  thres[,1] = crc - ((crlm) + (crll));
+  thres[,2] = crc - ((crlm));
   thres[,3] = crc;
-  thres[,4] = crc + (exp(crhm));
-  thres[,5] = crc + (exp(crhm) + exp(crhh));
+  thres[,4] = crc + ((crhm));
+  thres[,5] = crc + ((crhm) + (crhh));
   
   # calculate probabilities
   pold[,1] = gumbelmin(thres[,1], mu, disc)

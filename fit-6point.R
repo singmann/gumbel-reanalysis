@@ -8,6 +8,8 @@ theme_set(theme_bw(base_size = 15) +
 source("gumbel6agg-stan.R")
 source("uvsdt6agg-stan.R")
 
+sd_priors <- set_prior("student_t(5, 0, 2.5)", class = "sd", group = "id")
+
 data("roc6", package = "MPTinR")
 head(roc6)
 
@@ -30,7 +32,8 @@ gumbel_priors <- prior(normal(0,0.5), class = Intercept, dpar = "crc") +
   prior(normal(-0.5,0.5), class = Intercept, dpar = "crll") +
   prior(normal(-0.5,0.5), class = Intercept, dpar = "crhm") +
   prior(normal(-0.5,0.5), class = Intercept, dpar = "crhh") +
-  prior(student_t(3, 1, 2), class = Intercept)
+  prior(student_t(3, 1, 2), class = Intercept) +
+  sd_priors
 
 uvsdt_formula <- brmsformula(
   OLD_3new | vint(OLD_2new, OLD_1new, OLD_1old, OLD_2old, OLD_3old, NEW_3new, NEW_2new, NEW_1new, NEW_1old, NEW_2old, NEW_3old) ~ 1 + (1|p|id), 
@@ -47,7 +50,8 @@ uvsdt_priors <- prior(normal(0,0.5), class = Intercept, dpar = "crc") +
   prior(normal(-0.5,0.5), class = Intercept, dpar = "crhm") +
   prior(normal(-0.5,0.5), class = Intercept, dpar = "crhh") +
   prior(student_t(3, 0.5, 1), class = Intercept, dpar = "discsignal") +
-  prior(student_t(3, 1, 2), class = Intercept)
+  prior(student_t(3, 1, 2), class = Intercept) +
+  sd_priors
 
 roc6_data <- vector("list", length(dataset6))
 
@@ -91,65 +95,3 @@ for (i in seq_along(dataset6)) {
 
 
 ###########
-
-
-# data("roc8", package = "MPTinR")
-# head(roc8)
-# 
-# benjamin_6p <- roc8 %>% 
-#   filter(exp == "Benjamin_2013") %>% 
-#   mutate(
-#     OLD_2new_new = OLD_3new + OLD_2new,
-#     OLD_2old_new = OLD_3old + OLD_2old,
-#     NEW_2new_new = NEW_3new + NEW_2new,
-#     NEW_2old_new = NEW_3old + NEW_2old
-#   ) %>% 
-#   mutate(
-#     OLD_3new = OLD_4new, 
-#     OLD_3old = OLD_4old,
-#     NEW_3new = NEW_4new, 
-#     NEW_3old = NEW_4old
-#   ) %>% 
-#   mutate(
-#     OLD_2new = OLD_2new_new, 
-#     OLD_2old = OLD_2old_new,
-#     NEW_2new = NEW_2new_new, 
-#     NEW_2old = NEW_2old_new
-#   ) %>% 
-#   select(OLD_3new:OLD_3old, NEW_3new:NEW_3old, exp, id)
-# 
-# roc8 %>%
-#   filter(exp == "Benjamin_2013") %>%
-#   select(-exp, -id) %>%
-#   rowSums()
-# 
-# benjamin_6p %>% 
-#   select(-exp, -id) %>% 
-#   rowSums()
-# 
-# benjamin_6p %>% 
-#   mutate(
-#     hit = rowSums(cbind(OLD_1old, OLD_2old, OLD_3old)) / 
-#       rowSums(cbind(OLD_3new, OLD_2new, OLD_1new, 
-#                     OLD_1old, OLD_2old, OLD_3old)),
-#     fa = rowSums(cbind(NEW_1old, NEW_2old, NEW_3old)) / 
-#       rowSums(cbind(NEW_3new, NEW_2new, NEW_1new, 
-#                     NEW_1old, NEW_2old, NEW_3old))
-#   ) %>% 
-#   mutate(acc = (hit + (1-fa)) / 2) %>% 
-#   arrange(acc) %>% 
-#   filter(acc < .6) %>% 
-#   select(id) %>% 
-#   unlist() %>% 
-#   unname() %>% 
-#   as.character() %>% 
-#   dput()
-# 
-# benjamin_6p <- benjamin_6p %>% 
-#   filter(!(id %in% c("74:Benjamin", "91:Benjamin", "32:Benjamin", "35:Benjamin", 
-#                      "88:Benjamin", "109:Benjamin", "67:Benjamin", "84:Benjamin", 
-#                      "108:Benjamin", "61:Benjamin", "64:Benjamin", "110:Benjamin")))
-# 
-# roc6_use <- bind_rows(
-#   benjamin_6p, roc6
-# )

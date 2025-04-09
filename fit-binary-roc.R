@@ -10,6 +10,8 @@ source("bin-roc-data.R")
 source("gumbelbin-stan.R")
 source("uvsdtbin-stan.R")
 
+sd_priors <- set_prior("student_t(5, 0, 2.5)", class = "sd", group = "pid")
+
 #### new data sets
 
 head(dbin5point) ## miss, hit, cr, false alarm 
@@ -57,24 +59,26 @@ dataset_all <- dataset_all[-which(dataset_all %in% c("Malejka (2019, E1)",
 gumbel_formula_2 <- brmsformula(
   hit | vint(Nold, fa, Nnew) ~ 1 + (1|p|pid), 
   cr ~ 0 + baserate + (0 + baserate|p|pid),
-  family = gumbelbin_family, cmc = TRUE
+  family = gumbelbin_family
 )
 
 get_prior(gumbel_formula_2, 
           data = filter(bdin_long, exp == dataset_all[[1]]))
 
-gumbel_priors <- prior(student_t(3, 1, 2), class = Intercept)
+gumbel_priors <- prior(student_t(3, 1, 2), class = "Intercept") +
+  sd_priors
 ## prior(normal(0,0.5), class = b, dpar = "cr") + 
 
 uvsdt_formula_2 <- brmsformula(
   hit | vint(Nold, fa, Nnew) ~ 1 + (1|p|pid), 
   discsignal ~ 1 + (1|p|pid), 
   cr ~ 0 + baserate + (0 + baserate|p|pid),
-  family = uvsdtbin_family, cmc = FALSE
+  family = uvsdtbin_family
 )
 
-uvsdt_priors <- prior(student_t(3, 1, 2), class = Intercept) +
-  prior(student_t(3, 0.5, 1), class = Intercept, dpar = "discsignal")
+uvsdt_priors <- prior(student_t(3, 1, 2), class = "Intercept") +
+  prior(student_t(3, 0.5, 1), class = Intercept, dpar = "discsignal") +
+  sd_priors
 # prior(normal(0,0.5), class = b, dpar = "cr") + 
 
 

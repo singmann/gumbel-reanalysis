@@ -1,20 +1,15 @@
+source("gumbelmin_dist-stan.R")
+## cat(gumbelmin_dist)
 gumbelbin_stanvars <- "
-   real gumbelmin(real x, real mu, real disc){
-     //return 1- exp(-exp(-(-x-mu)/disc));
-     //return exp(gumbel_lccdf(-x | mu,disc));
-     return 1 - gumbel_cdf(-x|mu,disc);
-   }
    real gumbelbin_lpmf(int y, real mu, 
                    real cr,
                    int Nold, int ynew, int Nnew) {
-
-    real disc = 1;
     real pold;
     real pnew;
 
     // calculate probabilities
-    pold = 1 - gumbelmin(cr, -mu, disc);
-    pnew = 1 - gumbelmin(cr, 0, disc);
+    pold = 1 - gumbelmin_cdf(cr, mu);
+    pnew = 1 - gumbelmin_cdf(cr, 0);
     
     return binomial_lpmf(y | Nold, pold) + binomial_lpmf(ynew | Nnew, pnew);
    }
@@ -26,11 +21,12 @@ gumbelbin_family <- custom_family(
   links = c("identity", "identity"), 
   type = "int", vars = c("vint1[n]", "vint2[n]", "vint3[n]")
 )
-sv_gumbelbin <- stanvar(scode = gumbelbin_stanvars, block = "functions")
+sv_gumbelbin <- stanvar(scode = gumbelmin_dist, block = "functions") + 
+  stanvar(scode = gumbelbin_stanvars, block = "functions")
 
 calc_posterior_predictions_gumbelbin <- function(i, prep) {
   gumbelmin <- function(x, mu, disc) {
-    return(1 - extraDistr::pgumbel(-x,mu,disc))
+    return(1 - extraDistr::pgumbel(-x,-mu,disc))
   }
   mu <- brms::get_dpar(prep, "mu", i = i)
   #discsignal <- brms::get_dpar(prep, "discsignal", i = i)
@@ -43,7 +39,7 @@ calc_posterior_predictions_gumbelbin <- function(i, prep) {
   pnew <- vector("numeric", OUTLEN)
   
   # calculate probabilities
-  pold = 1 - gumbelmin(cr, -mu, disc)
+  pold = 1 - gumbelmin(cr, mu, disc)
   pnew = 1 - gumbelmin(cr, 0, disc)
 
     return(list(

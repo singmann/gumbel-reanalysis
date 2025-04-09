@@ -12,12 +12,12 @@ uvsdt6agg_stanvars <- "
   
   vector[nthres] thres;
   
-  // calculate thresholds
-  thres[1] = crc - (exp(crlm) + exp(crll));
-  thres[2] = crc - (exp(crlm));
-  thres[3] = crc;
-  thres[4] = crc + (exp(crhm));
-  thres[5] = crc + (exp(crhm) + exp(crhh));
+    // calculate thresholds
+    thres[1] = crc - (crlm + crll);
+    thres[2] = crc - (crlm);
+    thres[3] = crc;
+    thres[4] = crc + (crhm);
+    thres[5] = crc + (crhm + crhh);
    
   // calculate probabilities
   pold[1] = Phi(disc * (thres[1] - mu));
@@ -38,7 +38,8 @@ uvsdt6agg_stanvars <- "
 uvsdt6agg_family <- custom_family(
   name = "uvsdt6agg", 
   dpars = c("mu", "discsignal", "crc", "crlm", "crll", "crhm", "crhh"), 
-  links = c("identity", "log", rep("identity", 5)), lb = c(NA, 0, rep(NA, 5)),
+  links = c("identity", "log", "identity", rep("log", 4)), 
+  lb = c(NA, 0, NA, rep(0, 4)),
   type = "int", vars = paste0("vint", 1:11, "[n]")
 )
 sv_uvsdt6agg <- stanvar(scode = uvsdt6agg_stanvars, block = "functions")
@@ -59,11 +60,11 @@ calc_posterior_predictions_uvsdt6agg <- function(i, prep) {
   pold <- matrix(NA_real_, nrow = OUTLEN, ncol = nthres+1)
   pnew <- matrix(NA_real_, nrow = OUTLEN, ncol = nthres+1)
   
-  thres[,1] = crc - (exp(crlm) + exp(crll));
-  thres[,2] = crc - (exp(crlm));
+  thres[,1] = crc - ((crlm) + (crll));
+  thres[,2] = crc - ((crlm));
   thres[,3] = crc;
-  thres[,4] = crc + (exp(crhm));
-  thres[,5] = crc + (exp(crhm) + exp(crhh));
+  thres[,4] = crc + ((crhm));
+  thres[,5] = crc + ((crhm) + (crhh));
   
   # calculate probabilities
   pold[,1] = pnorm(discsignal * (thres[,1] - mu))

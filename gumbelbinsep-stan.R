@@ -1,21 +1,16 @@
+source("gumbelmin_dist-stan.R")
+## cat(gumbelmin_dist)
 gumbelbinsep_stanvars <- "
-   real gumbelmin(real x, real mu, real disc){
-     //return 1- exp(-exp(-(-x-mu)/disc));
-     //return exp(gumbel_lccdf(-x | mu,disc));
-     return 1 - gumbel_cdf(-x|mu,disc);
-   }
    real gumbelbinsep_lpmf(int y, real mu, 
                    real cr,
                    int N, int type) {
-
-    real disc = 1;
     real p;
 
     // calculate probabilities
     if (type == 0) {
-      p = 1 - gumbelmin(cr, -mu, disc);
+      p = 1 - gumbelmin_cdf(cr, mu);
     } else if (type == 1) {
-      p = 1 - gumbelmin(cr, 0, disc);
+      p = 1 - gumbelmin_cdf(cr, 0);
     }
     
     return binomial_lpmf(y | N, p);
@@ -28,11 +23,12 @@ gumbelbinsep_family <- custom_family(
   links = c("identity", "identity"), 
   type = "int", vars = c("vint1[n]", "vint2[n]")
 )
-sv_gumbelbinsep <- stanvar(scode = gumbelbinsep_stanvars, block = "functions")
+sv_gumbelbinsep <- stanvar(scode = gumbelmin_dist, block = "functions") + 
+  stanvar(scode = gumbelbinsep_stanvars, block = "functions")
 
 calc_posterior_predictions_gumbelbinsep <- function(i, prep) {
   gumbelmin <- function(x, mu, disc) {
-    return(1 - extraDistr::pgumbel(-x,mu,disc))
+    return(1 - extraDistr::pgumbel(-x,-mu,disc))
   }
   mu <- brms::get_dpar(prep, "mu", i = i)
   #discsignal <- brms::get_dpar(prep, "discsignal", i = i)
@@ -46,7 +42,7 @@ calc_posterior_predictions_gumbelbinsep <- function(i, prep) {
   
   # calculate probabilities
   if (type == 0) {
-    p <- 1 - gumbelmin(cr, -mu, disc)  
+    p <- 1 - gumbelmin(cr, mu, disc)  
   } else {
     p <- 1 - gumbelmin(cr, 0, disc)  
   }

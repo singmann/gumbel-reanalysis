@@ -136,54 +136,6 @@ fit_mhe1_uvsdt <- brm(
 save(fit_kke1_gumbel, fit_kke1_uvsdt, fit_kks_gumbel, fit_kks_uvsdt, 
      fit_mhe1_gumbel, fit_mhe1_uvsdt, file = "fit-4rank.rda", compress = "xz")
 
-
-##-------------
-##  Exact LOO  
-##-------------
-
-library(future)
-plan(multisession, workers = 12)
-
-exloo_kks_gumbel <- kfold(
-  x = fit_kks_gumbel, group = "id", sample_new_levels = "uncertainty", 
-  future_args = list(future.globals = c("log_lik_gumbelrank", "calc_posterior_predictions_gumbelrank", 
-                                        "posterior_epred_gumbelrank", "posterior_predict_gumbelrank")))
-
-exloo_kke1_gumbel <- kfold(
-  x = fit_kke1_gumbel, group = "id", sample_new_levels = "uncertainty", 
-  future_args = list(future.globals = c("log_lik_gumbelrank", "calc_posterior_predictions_gumbelrank", 
-                                        "posterior_epred_gumbelrank", "posterior_predict_gumbelrank")))
-
-exloo_mhe1_gumbel <- kfold(
-  x = fit_mhe1_gumbel, group = "id", sample_new_levels = "uncertainty", 
-  future_args = list(future.globals = c("log_lik_gumbelrank", "calc_posterior_predictions_gumbelrank", 
-                                        "posterior_epred_gumbelrank", "posterior_predict_gumbelrank")))
-
-exloo_kks_uvsdt <- kfold(
-  x = fit_kks_uvsdt, group = "id", sample_new_levels = "uncertainty", 
-  future_args = list(future.globals = c("log_lik_uvsdtrank", "calc_posterior_predictions_uvsdtrank", 
-                                        "posterior_epred_uvsdtrank", "posterior_predict_uvsdtrank")))
-
-exloo_kke1_uvsdt <- kfold(
-  x = fit_kke1_uvsdt, group = "id", sample_new_levels = "uncertainty", 
-  future_args = list(future.globals = c("log_lik_uvsdtrank", "calc_posterior_predictions_uvsdtrank", 
-                                        "posterior_epred_uvsdtrank", "posterior_predict_uvsdtrank")))
-
-exloo_mhe1_uvsdt <- kfold(
-  x = fit_mhe1_uvsdt, group = "id", sample_new_levels = "uncertainty", 
-  future_args = list(future.globals = c("log_lik_uvsdtrank", "calc_posterior_predictions_uvsdtrank", 
-                                        "posterior_epred_uvsdtrank", "posterior_predict_uvsdtrank")))
-
-
-exloo_kks <- loo_compare(exloo_kks_uvsdt, exloo_kks_gumbel)
-exloo_kke1 <- loo_compare(exloo_kke1_uvsdt, exloo_kke1_gumbel)
-exloo_mhe1 <- loo_compare(exloo_mhe1_uvsdt, exloo_mhe1_gumbel)
-
-save(exloo_kke1, exloo_kke1_gumbel, exloo_kke1_uvsdt, 
-     exloo_kks, exloo_kks_gumbel, exloo_kks_uvsdt, 
-     exloo_mhe1, exloo_mhe1_gumbel, exloo_mhe1_uvsdt, file = "exloo_4rank.rda")
-
-
 ##---------------------------------------------------------------
 ##                            3 Ranks                           -
 ##---------------------------------------------------------------
@@ -290,94 +242,30 @@ save(fit_kke2_gumbel, fit_kke2_uvsdt,
      fit_mge2_gumbel, fit_mge2_uvsdt, file = "fit-3rank.rda", compress = "xz")
 load("fit-3rank.rda")
 
-##-------------
-##  Exact LOO  
-##-------------
-
-library(future)
-plan(multisession, workers = 16)
-
-exloo_kke2_gumbel <- kfold(
-  x = fit_kke2_gumbel, group = "id", sample_new_levels = "uncertainty", 
-  future_args = list(future.globals = c("log_lik_gumbelrank3", "calc_posterior_predictions_gumbelrank3", 
-                                        "posterior_epred_gumbelrank3", "posterior_predict_gumbelrank3")))
-
-exloo_kke2_uvsdt <- kfold(
-  x = fit_kke2_uvsdt, group = "id", sample_new_levels = "uncertainty", 
-  future_args = list(future.globals = c("log_lik_uvsdtrank3", "calc_posterior_predictions_uvsdtrank3", 
-                                        "posterior_epred_uvsdtrank3", "posterior_predict_uvsdtrank3")))
-
-exloo_mge1_gumbel <- kfold(
-  x = fit_mge1_gumbel, group = "id", sample_new_levels = "uncertainty", 
-  future_args = list(future.globals = c("log_lik_gumbelrank3", "calc_posterior_predictions_gumbelrank3", 
-                                        "posterior_epred_gumbelrank3", "posterior_predict_gumbelrank3")))
-
-exloo_mge1_uvsdt <- kfold(
-  x = fit_mge1_uvsdt, group = "id", sample_new_levels = "uncertainty", 
-  future_args = list(future.globals = c("log_lik_uvsdtrank3", "calc_posterior_predictions_uvsdtrank3", 
-                                        "posterior_epred_uvsdtrank3", "posterior_predict_uvsdtrank3")))
-
-exloo_mge2_gumbel <- kfold(
-  x = fit_mge2_gumbel, group = "id", sample_new_levels = "uncertainty", 
-  future_args = list(future.globals = c("log_lik_gumbelrank3", "calc_posterior_predictions_gumbelrank3", 
-                                        "posterior_epred_gumbelrank3", "posterior_predict_gumbelrank3")))
-
-exloo_mge2_uvsdt <- kfold(
-  x = fit_mge2_uvsdt, group = "id", sample_new_levels = "uncertainty", 
-  future_args = list(future.globals = c("log_lik_uvsdtrank3", "calc_posterior_predictions_uvsdtrank3", 
-                                        "posterior_epred_uvsdtrank3", "posterior_predict_uvsdtrank3")))
-
-exloo_kke2 <- loo_compare(exloo_kke2_uvsdt, exloo_kke2_gumbel)
-exloo_mge1 <- loo_compare(exloo_mge1_uvsdt, exloo_mge1_gumbel)
-exloo_mge2 <- loo_compare(exloo_mge2_uvsdt, exloo_mge2_gumbel)
-
-save(exloo_kke2_gumbel, exloo_kke2_uvsdt,
-     exloo_mge1_gumbel, exloo_mge1_uvsdt,
-     exloo_mge2_gumbel, exloo_mge2_uvsdt, 
-     exloo_kke2, exloo_mge1, exloo_mge2,
-     file = "exloo_3rank.rda")
 
 
-load("exloo_4rank.rda")
-load("exloo_3rank.rda")
+##----------------------------------------------------------------
+##                              Plot                             -
+##----------------------------------------------------------------
 
-rankloos_uvsdt <- list(
-  exloo_kke1_uvsdt,
-  exloo_kke2_uvsdt,
-  exloo_mge1_uvsdt,
-  exloo_mge2_uvsdt,
-  exloo_kks_uvsdt,
-  exloo_mhe1_uvsdt
-  )
-rankloos_gumbel <- list(
-  exloo_kke1_gumbel,
-  exloo_kke2_gumbel,
-  exloo_mge1_gumbel,
-  exloo_mge2_gumbel,
-  exloo_kks_gumbel,
-  exloo_mhe1_gumbel
+kks12_agg <- kks12 %>% 
+  mutate(exp = "Kellen (2012)") %>% 
+  group_by(exp) %>% 
+  summarise(across(V1:V4, sum)) %>% 
+  mutate(total = V1 + V2 + V3 + V4) %>% 
+  mutate(across(V1:V4, ~./total)) %>% 
+  select(-total) %>% 
+  pivot_longer(cols = -exp, names_to = "rank", values_to = "observed") %>% 
+  mutate(rank = str_extract(rank, "\\d"))
+
+kks12_gumbel <- posterior_epred(fit_kks_gumbel)
+kks12_agg$gumbel <- apply(kks12_gumbel, 3, mean)
+kks12_uvsdt <- posterior_epred(fit_kks_uvsdt)
+kks12_agg$uvsdt <- apply(kks12_uvsdt, 3, mean)
+
+d_4r_strength <- bind_rows(
+  mutate(kk14_e1_use, exp = "Klauer (2014, E1)"),
+  mutate(mhe_e1_use)
 )
 
-exloo_rank <- list(
-  exloo_kke1, exloo_kke2, exloo_mge1, exloo_mge2, exloo_kks, exloo_mhe1
-)
-dnames <- c("kke1", "kke2", "mge1", "mge2", "kks", "mhe1")
 
-tibble(
-  dataset = dnames,
-  elpd_g = map_dbl(rankloos_gumbel, ~.$estimates["elpd_kfold","Estimate"]),
-  elpd_uv = map_dbl(rankloos_uvsdt, ~.$estimates["elpd_kfold","Estimate"]),
-) %>% 
-  mutate(max_elpd = pmax(elpd_g, elpd_uv)) %>% 
-  mutate(across(c(elpd_g, elpd_uv), ~ sprintf(.-max_elpd, fmt = '%#.1f'))) %>% 
-  mutate(diff_SE = map_dbl(exloo_rank, ~ .[2, "se_diff"])) %>% 
-  mutate(diff_sig = map_lgl(exloo_rank, ~ abs(.[2, "elpd_diff"]) > (2*.[2, "se_diff"])))
-# # A tibble: 6 × 6
-# dataset elpd_g elpd_uv max_elpd diff_SE diff_sig
-# <chr>   <chr>  <chr>      <dbl>   <dbl> <lgl>   
-# 1 kke1    0.0    -6.6       -370.    2.42 TRUE    
-# 2 kke2    0.0    -0.6       -310.    3.81 FALSE   
-# 3 mge1    0.0    -2.2       -573.    3.06 FALSE   
-# 4 mge2    0.0    -4.0      -1207.    5.15 FALSE   
-# 5 kks     0.0    -2.1       -271.    2.98 FALSE   
-# 6 mhe1    0.0    -3.2       -368.    2.53 FALSE   

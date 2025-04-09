@@ -14,13 +14,13 @@ uvsdt8agg_stanvars <- "
   vector[nthres] thres;
   
   // calculate thresholds
-  thres[1] = crc - (exp(crlm) + exp(crll) + exp(crlx));
-  thres[2] = crc - (exp(crlm) + exp(crll));
-  thres[3] = crc - (exp(crlm));
+  thres[1] = crc - (crlm + crll + crlx);
+  thres[2] = crc - (crlm + crll);
+  thres[3] = crc - (crlm);
   thres[4] = crc;
-  thres[5] = crc + (exp(crhm));
-  thres[6] = crc + (exp(crhm) + exp(crhh));
-  thres[7] = crc + (exp(crhm) + exp(crhh) + exp(crhx));
+  thres[5] = crc + (crhm);
+  thres[6] = crc + (crhm + crhh);
+  thres[7] = crc + (crhm + crhh + crhx);
    
   // calculate probabilities
   pold[1] = Phi(disc * (thres[1] - mu));
@@ -41,7 +41,8 @@ uvsdt8agg_stanvars <- "
 uvsdt8agg_family <- custom_family(
   name = "uvsdt8agg", 
   dpars = c("mu", "discsignal", "crc", "crlm", "crll", "crlx", "crhm", "crhh", "crhx"), 
-  links = c("identity", "log", rep("identity", 7)), lb = c(NA, 0, rep(NA, 7)),
+  links = c("identity", "log", "identity", rep("log", 6)), 
+  lb = c(NA, 0, NA, rep(0, 6)),
   type = "int", vars = paste0("vint", 1:15, "[n]")
 )
 sv_uvsdt8agg <- stanvar(scode = uvsdt8agg_stanvars, block = "functions")
@@ -64,13 +65,13 @@ calc_posterior_predictions_uvsdt8agg <- function(i, prep) {
   pold <- matrix(NA_real_, nrow = OUTLEN, ncol = nthres+1)
   pnew <- matrix(NA_real_, nrow = OUTLEN, ncol = nthres+1)
   
-  thres[,1] = crc - (exp(crlm) + exp(crll) + exp(crlx));
-  thres[,2] = crc - (exp(crlm) + exp(crll));
-  thres[,3] = crc - (exp(crlm));
+  thres[,1] = crc - (crlm + (crll) + (crlx));
+  thres[,2] = crc - ((crlm) + (crll));
+  thres[,3] = crc - ((crlm));
   thres[,4] = crc;
-  thres[,5] = crc + (exp(crhm));
-  thres[,6] = crc + (exp(crhm) + exp(crhh));
-  thres[,7] = crc + (exp(crhm) + exp(crhh) + exp(crhx));
+  thres[,5] = crc + ((crhm));
+  thres[,6] = crc + ((crhm) + (crhh));
+  thres[,7] = crc + ((crhm) + (crhh) + (crhx));
   
   # calculate probabilities
   pold[,1] = pnorm(discsignal * (thres[,1] - mu))

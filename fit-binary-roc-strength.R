@@ -10,6 +10,8 @@ source("dube-bin-strength-data.R")
 source("gumbelbinsep-stan.R")
 source("uvsdtbinsep-stan.R")
 
+sd_priors <- set_prior("student_t(5, 0, 2.5)", class = "sd", group = "pid")
+
 #### new data sets
 
 head(dbin_dube)
@@ -26,12 +28,13 @@ datasets_all <- unique(dbin_dube$exp)
 gumbel_formula <- brmsformula(
   O | vint(total, oldnew) ~ 0 + newstrength + (0 + newstrength|p|pid), 
   cr ~ 0 + baserate + (0 + baserate|p|pid),
-  family = gumbelbinsep_family, cmc = TRUE
+  family = gumbelbinsep_family, center = FALSE
 )
 
 get_prior(gumbel_formula, data = dbin_dube)
 
-gumbel_priors <- prior(student_t(3, 1, 2), class = b)
+gumbel_priors <- prior(student_t(3, 1, 2), class = b) +
+  sd_priors
 ### prior(normal(0,0.5), class = b, dpar = "cr") + 
 
 # make_stancode(gumbel_formula, family = gumbelbinsep_family, 
@@ -47,11 +50,12 @@ uvsdt_formula <- brmsformula(
   O | vint(total, oldnew) ~ 0 + newstrength + (0 + newstrength|p|pid),  
   discsignal ~ 1 + (1|p|pid), 
   cr ~ 0 + baserate + (0 + baserate|p|pid),
-  family = uvsdtbinsep_family, cmc = TRUE
+  family = uvsdtbinsep_family, center = FALSE
 )
 
 uvsdt_priors <- prior(student_t(3, 1, 2), class = "b") +
-  prior(student_t(3, 0.5, 1), class = Intercept, dpar = "discsignal")
+  prior(student_t(3, 0.5, 1), class = Intercept, dpar = "discsignal") +
+  sd_priors
 # prior(normal(0,0.5), class = b, dpar = "cr") + 
 
 
@@ -83,7 +87,15 @@ for (i in seq_along(datasets_all)) {
   )
 }
 
+xxx <- map(dube_bin_fits_gumbel, ~rstan::get_sampler_params(.$fit))
+for (i in seq_along(dube_bin_fits_gumbel)) {
+  cat(i, ": ", sum(map_dbl(xxx[[i]], ~sum(.[1001:2000,"divergent__"]))), "\n")
+}
 
+xxy <- map(dube_bin_fits_uvsdt, ~rstan::get_sampler_params(.$fit))
+for (i in seq_along(dube_bin_fits_uvsdt)) {
+  cat(i, ": ", sum(map_dbl(xxy[[i]], ~sum(.[1001:2000,"divergent__"]))), "\n")
+}
 
 ### make plots
 
@@ -170,7 +182,7 @@ plot_dat_2 %>%
   coord_fixed(xlim = c(0, 1), ylim = c(0, 1), expand = FALSE) +
   scale_x_continuous(breaks = c(0, 0.5, 1), labels = c("0", ".5", "1")) +
   scale_y_continuous(breaks = c(0, 0.5, 1), labels = c("0", ".5", "1")) +
-  facet_wrap(vars(exp), nrow = 1) + 
+  facet_wrap(vars(exp), ncol = 1) + 
   scale_color_manual(
      name = '',
      breaks = c('Data', 'UVSD', 'Gumbel'),
@@ -186,4 +198,4 @@ plot_dat_2 %>%
   theme(legend.title = NULL) +
   labs(x = expression(italic(p)[FA]), y = expression(italic(p)[H]))
 ggsave("binstrengthroc-plot1.pdf", 
-       width = 14, height = 9.75, units = "cm")
+       width = 9, height = 18.75, units = "cm")
