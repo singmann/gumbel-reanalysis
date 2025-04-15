@@ -60,6 +60,8 @@ roc6_fits_uvsdt <- vector("list", length(dataset6))
 
 control1 <- list(adapt_delta = 0.99, max_treedepth = 20)
 control2 <- list(adapt_delta = 0.9999999, max_treedepth = 20)
+# iter <- 4000
+# warmup <- 1000
 
 for (i in seq_along(dataset6)) {
   print(i)
@@ -70,6 +72,7 @@ for (i in seq_along(dataset6)) {
     stanvars = sv_gumbel6agg ,
     prior = gumbel_priors,
     init_r = 0.5, 
+    iter = iter, warmup = warmup,
     control = if (i %in% c(5, 6, 7)) control2 else control1
   )
 
@@ -78,20 +81,21 @@ for (i in seq_along(dataset6)) {
     stanvars = sv_uvsdt6agg, 
     prior = uvsdt_priors,
     init_r = 0.5, 
+    iter = iter, warmup = warmup,
     control = control1
   )
 
 }
 
-xxx <- map(roc6_fits_gumbel, ~rstan::get_sampler_params(.$fit))
-for (i in seq_along(dataset6)) {
-  cat(dataset6[i], ": ", sum(map_dbl(xxx[[i]], ~sum(.[1001:2000,"divergent__"]))), "\n")
-}
-
-xxy <- map(roc6_fits_uvsdt, ~rstan::get_sampler_params(.$fit))
-for (i in seq_along(dataset6)) {
-  cat(dataset6[i], ": ", sum(map_dbl(xxy[[i]], ~sum(.[1001:2000,"divergent__"]))), "\n")
-}
+# xxx <- map(roc6_fits_gumbel, ~rstan::get_sampler_params(.$fit))
+# for (i in seq_along(dataset6)) {
+#   cat(dataset6[i], ": ", sum(map_dbl(xxx[[i]], ~sum(.[1001:2000,"divergent__"]))), "\n")
+# }
+# 
+# xxy <- map(roc6_fits_uvsdt, ~rstan::get_sampler_params(.$fit))
+# for (i in seq_along(dataset6)) {
+#   cat(dataset6[i], ": ", sum(map_dbl(xxy[[i]], ~sum(.[1001:2000,"divergent__"]))), "\n")
+# }
 
 
 ###########

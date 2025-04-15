@@ -87,6 +87,8 @@ rocbin_data <- vector("list", length(dataset_all))
 rocbin_fits_gumbel <- vector("list", length(dataset_all))
 rocbin_fits_uvsdt <- vector("list", length(dataset_all))
 
+iter <- 3000
+warmup <- 1000
 
 #set.seed(4567123)
 for (i in seq_along(dataset_all)) {
@@ -99,6 +101,7 @@ for (i in seq_along(dataset_all)) {
     stanvars = sv_gumbelbin ,
     prior = gumbel_priors,
     init_r = 0.5, 
+    iter = iter, warmup = warmup,
     control = list(adapt_delta = 0.99, max_treedepth = 20)
   )
   rocbin_fits_uvsdt[[i]] <- brm(
@@ -106,10 +109,43 @@ for (i in seq_along(dataset_all)) {
     stanvars = sv_uvsdtbin, 
     prior = uvsdt_priors,
     init_r = 0.5, 
+    iter = iter, warmup = warmup,
     control = list(adapt_delta = 0.99, max_treedepth = 20)
   )
 }
 
+### convergence stats
+source("check-functions.R")
+max(vapply(rocbin_fits_gumbel, get_max_rhat, 0))
+# 1.00445
+max(vapply(rocbin_fits_uvsdt, get_max_rhat, 0))
+# 1.009024
+
+xxx <- map(rocbin_fits_gumbel, ~rstan::get_sampler_params(.$fit))
+for (i in seq_along(dataset_all)) {
+  cat(dataset_all[i], ": ", sum(map_dbl(xxx[[i]], ~sum(.[(warmup+1):iter,"divergent__"])))/((iter-warmup)*4), "\n")
+}
+# Broder (2009, E3) :  0 
+# Dube (2012, E1a-P) :  0 
+# Dube (2012, E1a-W) :  0 
+# Dube (2012, E2) :  0 
+# Malejka (2019, E2) :  0 
+# Van Zandt (2000, E1-F) :  0 
+# Van Zandt (2000, E1-S) :  0 
+# Van Zandt (2000, E2) :  0.00025 
+
+xxx <- map(rocbin_fits_uvsdt, ~rstan::get_sampler_params(.$fit))
+for (i in seq_along(dataset_all)) {
+  cat(dataset_all[i], ": ", sum(map_dbl(xxx[[i]], ~sum(.[(warmup+1):iter,"divergent__"])))/((iter-warmup)*4), "\n")
+}
+# Broder (2009, E3) :  0 
+# Dube (2012, E1a-P) :  0 
+# Dube (2012, E1a-W) :  0 
+# Dube (2012, E2) :  0 
+# Malejka (2019, E2) :  0 
+# Van Zandt (2000, E1-F) :  0.00075 
+# Van Zandt (2000, E1-S) :  0.000125 
+# Van Zandt (2000, E2) :  0.000125 
 
 
 ### make plots

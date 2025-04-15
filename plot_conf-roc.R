@@ -1,6 +1,73 @@
+warmup <- 1000
+iter <- 4000
 source("fit-6point.R")
+
+iter <- 5000
 source("fit-8point.R")
 
+##### Rhat
+source("check-functions.R")
+max(vapply(roc6_fits_gumbel, get_max_rhat, 0))
+## 1.00735
+max(vapply(roc8_fits_gumbel, get_max_rhat, 0))
+## 1.006542
+
+max(vapply(roc6_fits_uvsdt, get_max_rhat, 0))
+## 1.008898
+max(vapply(roc8_fits_uvsdt, get_max_rhat, 0))
+## 1.006671
+
+
+#### divergent transitions
+xxx <- map(roc6_fits_gumbel, ~rstan::get_sampler_params(.$fit))
+for (i in seq_along(dataset6)) {
+  cat(dataset6[i], ": ", sum(map_dbl(xxx[[i]], ~sum(.[(warmup+1):iter,"divergent__"])))/((iter-warmup)*4), "\n")
+}
+# Dube_2012-P :  0.0001666667 
+# Dube_2012-W :  0 
+# Heathcote_2006_e1 :  0 
+# Heathcote_2006_e2 :  0 
+# Jaeger_2012 :  0.02875 
+# Jang_2009 :  0.007916667 
+# Koen_2010_pure :  0.003583333 
+# Koen_2011 :  0.00025 
+# Koen-2013_full :  0 
+# Koen-2013_immediate :  0 
+# Pratte_2010 :  0 
+# Smith_2004 :  0 
+
+xxy <- map(roc6_fits_uvsdt, ~rstan::get_sampler_params(.$fit))
+for (i in seq_along(dataset6)) {
+  cat(dataset6[i], ": ", sum(map_dbl(xxy[[i]], ~sum(.[(warmup+1):iter,"divergent__"])))/((iter-warmup)*4), "\n")
+}
+# Dube_2012-P :  0 
+# Dube_2012-W :  0 
+# Heathcote_2006_e1 :  0 
+# Heathcote_2006_e2 :  0 
+# Jaeger_2012 :  0.0003333333 
+# Jang_2009 :  0 
+# Koen_2010_pure :  0 
+# Koen_2011 :  0 
+# Koen-2013_full :  0 
+# Koen-2013_immediate :  0 
+# Pratte_2010 :  0 
+# Smith_2004 :  0 
+
+xxx <- map(roc8_fits_gumbel, ~rstan::get_sampler_params(.$fit))
+for (i in seq_along(dataset8)) {
+  cat(dataset8[i], ": ", sum(map_dbl(xxx[[i]], ~sum(.[(warmup+1):iter,"divergent__"])))/((iter-warmup)*4), "\n")
+}
+# Benjamin_2013 :  0.08575 
+# Onyper_2010-Pics :  0 
+# Onyper_2010-Words :  0 
+
+xxy <- map(roc8_fits_uvsdt, ~rstan::get_sampler_params(.$fit))
+for (i in seq_along(dataset8)) {
+  cat(dataset8[i], ": ", sum(map_dbl(xxy[[i]], ~sum(.[(warmup+1):iter,"divergent__"])))/((iter-warmup)*4), "\n")
+}
+# Benjamin_2013 :  0.0075625 
+# Onyper_2010-Pics :  0 
+# Onyper_2010-Words :  0 
 
 ## plots
 plot_data6 <- roc6 %>% 

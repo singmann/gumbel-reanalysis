@@ -102,6 +102,9 @@ roc8_fits_gumbel <- vector("list", length(dataset8))
 roc8_fits_uvsdt <- vector("list", length(dataset8))
 
 #i <- 1
+# iter <- 4000
+# warmup <- 1000
+
 for (i in seq_along(dataset8)) {
   print(i)
   roc8_data[[i]] <- roc8_use %>% 
@@ -111,6 +114,7 @@ for (i in seq_along(dataset8)) {
     gumbel_formula_8, data = roc8_data[[i]], 
     stanvars = sv_gumbel8agg, 
     prior = gumbel_priors_8,
+    iter = iter, warmup = warmup,
     init_r = 0.25, control = list(adapt_delta = 0.999999, max_treedepth = 20)
   )
 
@@ -119,18 +123,19 @@ for (i in seq_along(dataset8)) {
     uvsdt_formula_8, data = roc8_data[[i]], 
     stanvars = sv_uvsdt8agg, 
     prior = uvsdt_priors_8,
+    iter = iter, warmup = warmup,
     init_r = 0.5, control = list(adapt_delta = 0.999999, max_treedepth = 20)
   )
 }
-xxx <- map(roc8_fits_gumbel, ~rstan::get_sampler_params(.$fit))
-for (i in seq_along(dataset8)) {
-  cat(dataset8[i], ": ", sum(map_dbl(xxx[[i]], ~sum(.[1001:2000,"divergent__"]))), "\n")
-}
-
-xxy <- map(roc8_fits_uvsdt, ~rstan::get_sampler_params(.$fit))
-for (i in seq_along(dataset8)) {
-  cat(dataset8[i], ": ", sum(map_dbl(xxy[[i]], ~sum(.[1001:2000,"divergent__"]))), "\n")
-}
+# xxx <- map(roc8_fits_gumbel, ~rstan::get_sampler_params(.$fit))
+# for (i in seq_along(dataset8)) {
+#   cat(dataset8[i], ": ", sum(map_dbl(xxx[[i]], ~sum(.[1001:2000,"divergent__"]))), "\n")
+# }
+# 
+# xxy <- map(roc8_fits_uvsdt, ~rstan::get_sampler_params(.$fit))
+# for (i in seq_along(dataset8)) {
+#   cat(dataset8[i], ": ", sum(map_dbl(xxy[[i]], ~sum(.[1001:2000,"divergent__"]))), "\n")
+# }
 
 
 

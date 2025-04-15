@@ -12,6 +12,10 @@ source("uvsdtbinsep-stan.R")
 
 sd_priors <- set_prior("student_t(5, 0, 2.5)", class = "sd", group = "pid")
 
+iter <- 3000
+warmup <- 1000
+
+
 #### new data sets
 
 head(dbin_dube)
@@ -76,6 +80,7 @@ for (i in seq_along(datasets_all)) {
     stanvars = sv_gumbelbinsep ,
     prior = gumbel_priors,
     init_r = 0.5, 
+    iter = iter, warmup = warmup,
     control = list(adapt_delta = 0.99, max_treedepth = 20)
   )
   dube_bin_fits_uvsdt[[i]] <- brm(
@@ -83,19 +88,31 @@ for (i in seq_along(datasets_all)) {
     stanvars = sv_uvsdtbinsep, 
     prior = uvsdt_priors,
     init_r = 0.5, 
+    iter = iter, warmup = warmup,
     control = list(adapt_delta = 0.99, max_treedepth = 20)
   )
 }
 
+### convergence stats
+source("check-functions.R")
+max(vapply(dube_bin_fits_gumbel, get_max_rhat, 0))
+# 1.003178
+max(vapply(dube_bin_fits_uvsdt, get_max_rhat, 0))
+# 1.004639
+
 xxx <- map(dube_bin_fits_gumbel, ~rstan::get_sampler_params(.$fit))
 for (i in seq_along(dube_bin_fits_gumbel)) {
-  cat(i, ": ", sum(map_dbl(xxx[[i]], ~sum(.[1001:2000,"divergent__"]))), "\n")
+  cat(i, ": ", sum(map_dbl(xxx[[i]], ~sum(.[(warmup+1):iter,"divergent__"])))/((iter-warmup)*4), "\n")
 }
+# 1 :  0 
+# 2 :  0 
 
 xxy <- map(dube_bin_fits_uvsdt, ~rstan::get_sampler_params(.$fit))
 for (i in seq_along(dube_bin_fits_uvsdt)) {
-  cat(i, ": ", sum(map_dbl(xxy[[i]], ~sum(.[1001:2000,"divergent__"]))), "\n")
+  cat(i, ": ", sum(map_dbl(xxy[[i]], ~sum(.[(warmup+1):iter,"divergent__"])))/((iter-warmup)*4), "\n")
 }
+# 1 :  0 
+# 2 :  0 
 
 ### make plots
 

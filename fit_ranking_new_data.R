@@ -4,6 +4,7 @@ options(mc.cores = parallel::detectCores())
 theme_set(theme_bw(base_size = 15) + 
             theme(legend.position="bottom"))
 library("patchwork")
+source("check-functions.R")
 
 source("data_from_david.R")
 
@@ -21,13 +22,10 @@ uvsdt_priors <- prior(student_t(3, 0.5, 1),
 # xxx <- xxx[xxx < 20]
 # plot(density(xxx))
 
-##---------------------------------------------------------------
-##                            4 Ranks                           -
-##---------------------------------------------------------------
 
-##------------
-##  KKS 2012  
-##------------
+##----------------------------------------------------------------
+##                              Data                             -
+##----------------------------------------------------------------
 
 kks12l <- kks12 %>% 
   mutate(exp = "Kellen (2012)") %>% 
@@ -38,6 +36,92 @@ kks12l <- kks12 %>%
   mutate(strength = "r") %>% 
   select(exp, id, strength, rank, observed, maxrank) %>% 
   mutate(id = as.character(id))
+
+kk14_e1_use <- kk14_e1 %>% 
+  mutate(exp = "Kellen (2014, E1)") %>% 
+  pivot_longer(cols = rank1.w:rank4.s, 
+               names_to = c("rank", "strength"), names_sep = "\\.") %>% 
+  pivot_wider(names_from = rank, values_from = value) %>% 
+  mutate(strength = factor(strength, levels = c("w", "s"))) %>% 
+  pivot_longer(cols = -c(exp, id, strength), 
+               names_to = "rank", values_to = "observed") %>% 
+  mutate(rank = as.integer(as.numeric(str_extract(rank, "\\d"))),
+         maxrank = 4L) %>% 
+  select(exp, id, strength, rank, observed, maxrank) %>% 
+  mutate(id = as.character(id))
+
+mhe_e1_use <- mhe_e1 %>% 
+  mutate(exp = "Malejka (2022, E1)") %>% 
+  pivot_longer(cols = rank1.w:rank4.s, 
+               names_to = c("rank", "strength"), names_sep = "\\.") %>% 
+  pivot_wider(names_from = rank, values_from = value) %>% 
+  mutate(strength = factor(strength, levels = c("w", "s"))) %>% 
+  pivot_longer(cols = -c(exp, id, strength), 
+               names_to = "rank", values_to = "observed") %>% 
+  mutate(rank = as.integer(as.numeric(str_extract(rank, "\\d"))),
+         maxrank = 4L) %>% 
+  select(exp, id, strength, rank, observed, maxrank) %>% 
+  mutate(id = as.character(id))
+
+kk14_e2_use <- kk14_e2 %>% 
+  mutate(exp = "Kellen (2014, E2)") %>% 
+  pivot_longer(cols = rank1.w:rank3.s, 
+               names_to = c("rank", "strength"), names_sep = "\\.") %>% 
+  pivot_wider(names_from = rank, values_from = value) %>% 
+  mutate(strength = factor(strength, levels = c("w", "s"))) %>% 
+  pivot_longer(cols = -c(exp, id, strength), 
+               names_to = "rank", values_to = "observed") %>% 
+  mutate(rank = as.integer(as.numeric(str_extract(rank, "\\d"))),
+         maxrank = 3L) %>% 
+  select(exp, id, strength, rank, observed, maxrank) %>% 
+  mutate(id = as.character(id))
+
+mg16_e1
+mg16_e1_use <- mg16_e1 %>% 
+  mutate(exp = "McAdoo (2016, E1)") %>% 
+  pivot_longer(cols = rank1.w:rank3.s, 
+               names_to = c("rank", "strength"), names_sep = "\\.") %>% 
+  pivot_wider(names_from = rank, values_from = value) %>% 
+  mutate(strength = factor(strength, levels = c("w", "s")))  %>% 
+  pivot_longer(cols = -c(exp, id, strength), 
+               names_to = "rank", values_to = "observed") %>% 
+  mutate(rank = as.integer(as.numeric(str_extract(rank, "\\d"))),
+         maxrank = 3L) %>% 
+  select(exp, id, strength, rank, observed, maxrank) %>% 
+  mutate(id = as.character(id))
+
+mg16_e2
+mg16_e2_use <- mg16_e2 %>% 
+  mutate(exp = "McAdoo (2016, E2)") %>% 
+  pivot_longer(cols = rank1.w:rank3.s, 
+               names_to = c("rank", "strength"), names_sep = "\\.") %>% 
+  pivot_wider(names_from = rank, values_from = value) %>% 
+  mutate(strength = factor(strength, levels = c("w", "s"))) %>% 
+  pivot_longer(cols = -c(exp, id, strength), 
+               names_to = "rank", values_to = "observed") %>% 
+  mutate(rank = as.integer(as.numeric(str_extract(rank, "\\d"))),
+         maxrank = 3L) %>% 
+  select(exp, id, strength, rank, observed, maxrank) %>% 
+  mutate(id = as.character(id))
+
+dmgj24 <- read_csv("data_mj2024.csv")
+mgj24 <- dmgj24 %>% 
+  rename(id = ID) %>% 
+  mutate(exp = "Meyer-Grant (2024)") %>% 
+  group_by(exp, id, n_images, rank_target) %>% 
+  summarise(n=n(), .groups="drop") %>% 
+  rename(maxrank = n_images, rank = rank_target, observed = n) %>% 
+  mutate(strength = "r") %>% 
+  select(exp, id, strength, rank, observed, maxrank) %>% 
+  mutate(id = as.character(id))
+
+##---------------------------------------------------------------
+##                            4 Ranks                           -
+##---------------------------------------------------------------
+
+##------------
+##  KKS 2012  
+##------------
 
 gumbel_formula_kks <- brmsformula(
   observed | vint(rank, maxrank) ~ 1 + (1|p|id), 
@@ -78,18 +162,7 @@ kks12
 ##  KK14 E1  
 ##-----------
 
-kk14_e1_use <- kk14_e1 %>% 
-  mutate(exp = "Kellen (2014, E1)") %>% 
-  pivot_longer(cols = rank1.w:rank4.s, 
-               names_to = c("rank", "strength"), names_sep = "\\.") %>% 
-  pivot_wider(names_from = rank, values_from = value) %>% 
-  mutate(strength = factor(strength, levels = c("w", "s"))) %>% 
-  pivot_longer(cols = -c(exp, id, strength), 
-               names_to = "rank", values_to = "observed") %>% 
-  mutate(rank = as.integer(as.numeric(str_extract(rank, "\\d"))),
-         maxrank = 4L) %>% 
-  select(exp, id, strength, rank, observed, maxrank) %>% 
-  mutate(id = as.character(id))
+
 
 gumbel_formula_kke1 <- brmsformula(
   observed | vint(rank, maxrank) ~ strength + (strength|p|id), 
@@ -123,19 +196,6 @@ fit_kke1_uvsdt <- brm(
 ##  MHE22 E1  
 ##------------
 
-
-mhe_e1_use <- mhe_e1 %>% 
-  mutate(exp = "Malejka (2022, E1)") %>% 
-  pivot_longer(cols = rank1.w:rank4.s, 
-               names_to = c("rank", "strength"), names_sep = "\\.") %>% 
-  pivot_wider(names_from = rank, values_from = value) %>% 
-  mutate(strength = factor(strength, levels = c("w", "s"))) %>% 
-  pivot_longer(cols = -c(exp, id, strength), 
-               names_to = "rank", values_to = "observed") %>% 
-  mutate(rank = as.integer(as.numeric(str_extract(rank, "\\d"))),
-         maxrank = 4L) %>% 
-  select(exp, id, strength, rank, observed, maxrank) %>% 
-  mutate(id = as.character(id))
 
 gumbel_formula_mhe1 <- brmsformula(
   observed | vint(rank, maxrank) ~ strength + (strength|p|id), 
@@ -177,18 +237,6 @@ load("fit-4rank.rda")
 ##  KK14 E2  
 ##-----------
 
-kk14_e2_use <- kk14_e2 %>% 
-  mutate(exp = "Kellen (2014, E2)") %>% 
-  pivot_longer(cols = rank1.w:rank3.s, 
-               names_to = c("rank", "strength"), names_sep = "\\.") %>% 
-  pivot_wider(names_from = rank, values_from = value) %>% 
-  mutate(strength = factor(strength, levels = c("w", "s"))) %>% 
-  pivot_longer(cols = -c(exp, id, strength), 
-               names_to = "rank", values_to = "observed") %>% 
-  mutate(rank = as.integer(as.numeric(str_extract(rank, "\\d"))),
-         maxrank = 3L) %>% 
-  select(exp, id, strength, rank, observed, maxrank) %>% 
-  mutate(id = as.character(id))
 
 
 gumbel_formula_kke2 <- brmsformula(
@@ -224,21 +272,6 @@ fit_kke2_uvsdt <- brm(
 ##-----------
 #McAdoo and Gronlund (2016)
 
-mg16_e1
-mg16_e1_use <- mg16_e1 %>% 
-  mutate(exp = "McAdoo (2016, E1)") %>% 
-  pivot_longer(cols = rank1.w:rank3.s, 
-               names_to = c("rank", "strength"), names_sep = "\\.") %>% 
-  pivot_wider(names_from = rank, values_from = value) %>% 
-  mutate(strength = factor(strength, levels = c("w", "s")))  %>% 
-  pivot_longer(cols = -c(exp, id, strength), 
-               names_to = "rank", values_to = "observed") %>% 
-  mutate(rank = as.integer(as.numeric(str_extract(rank, "\\d"))),
-         maxrank = 3L) %>% 
-  select(exp, id, strength, rank, observed, maxrank) %>% 
-  mutate(id = as.character(id))
-
-
 fit_mge1_gumbel <- brm(
     gumbel_formula_kke2, data = mg16_e1_use, 
     stanvars = sv_gumbelrank, 
@@ -259,19 +292,7 @@ fit_mge1_uvsdt <- brm(
 ##  MG16 E2  
 ##-----------
 
-mg16_e2
-mg16_e2_use <- mg16_e2 %>% 
-  mutate(exp = "McAdoo (2016, E2)") %>% 
-  pivot_longer(cols = rank1.w:rank3.s, 
-               names_to = c("rank", "strength"), names_sep = "\\.") %>% 
-  pivot_wider(names_from = rank, values_from = value) %>% 
-  mutate(strength = factor(strength, levels = c("w", "s"))) %>% 
-  pivot_longer(cols = -c(exp, id, strength), 
-               names_to = "rank", values_to = "observed") %>% 
-  mutate(rank = as.integer(as.numeric(str_extract(rank, "\\d"))),
-         maxrank = 3L) %>% 
-  select(exp, id, strength, rank, observed, maxrank) %>% 
-  mutate(id = as.character(id))
+
 
 fit_mge2_gumbel <- brm(
     gumbel_formula_kke2, data = mg16_e2_use, 
@@ -298,16 +319,7 @@ load("fit-3rank.rda")
 ##                        Multiple Ranks                         -
 ##----------------------------------------------------------------
 ### Meyer-Grant and Jakob (2024)
-dmgj24 <- read_csv("data_mj2024.csv")
-mgj24 <- dmgj24 %>% 
-  rename(id = ID) %>% 
-  mutate(exp = "Meyer-Grant (2024)") %>% 
-  group_by(exp, id, n_images, rank_target) %>% 
-  summarise(n=n(), .groups="drop") %>% 
-  rename(maxrank = n_images, rank = rank_target, observed = n) %>% 
-  mutate(strength = "r") %>% 
-  select(exp, id, strength, rank, observed, maxrank) %>% 
-  mutate(id = as.character(id))
+
 
 gumbel_formula_mgj <- brmsformula(
   observed | vint(rank, maxrank) ~ 1 + (1|p|id), 
@@ -375,6 +387,9 @@ for (i in seq_along(gumbel_samp_params)) {
       sum(map_dbl(gumbel_samp_params[[i]], ~sum(.[1001:2000,"divergent__"]))), "\n")
 }
 
+max(vapply(rankfit_gumbel, get_max_rhat, 0)) 
+# 1.007453
+
 rankfit_uvsdt <- list(
   fit_kks_uvsdt,
   fit_kke1_uvsdt, fit_kke2_uvsdt,
@@ -384,6 +399,9 @@ rankfit_uvsdt <- list(
 )
 names(rankfit_uvsdt) <- unique(all_rank_data$exp)
 
+max(vapply(rankfit_uvsdt, get_max_rhat, 0)) 
+# 1.007562
+
 uvsdt_samp_params <- map(rankfit_uvsdt, ~rstan::get_sampler_params(.$fit))
 for (i in seq_along(uvsdt_samp_params)) {
   if (i == 1) cat("Number divergent transistions UVSDT:\n")
@@ -391,6 +409,8 @@ for (i in seq_along(uvsdt_samp_params)) {
       sum(map_dbl(uvsdt_samp_params[[i]], ~sum(.[1001:2000,"divergent__"]))),
       "\n")
 }
+
+
 
 pred_uvsdt <- lapply(rankfit_uvsdt, posterior_epred)
 pred_gumbel <- lapply(rankfit_gumbel, posterior_epred)
