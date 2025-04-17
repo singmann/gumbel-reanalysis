@@ -84,6 +84,12 @@ sv_gumbelsdai <- stanvar(scode = gumbelmin_dist, block = "functions") +
 
 
 calc_posterior_predictions_gumbelsdai <- function(i, prep) {
+  pgumbmin = function(p, g=0){
+    1 - exp(-exp(p-g))
+  }
+  dgumbmin = function(x, g=0){
+    exp(x-g)*exp(-exp(x-g))
+  }
   p_hit_gumb <- function(l, u, g1 = 0, g2=0){
     pgumbmin(u, g1)*pgumbmin(u, g2) - pgumbmin(l, g1)*pgumbmin(l, g2)
   }

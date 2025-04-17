@@ -51,10 +51,7 @@ fit_uvsd <- brm(
 save(fit_uvsd, file = "sdai-fits.rda", compress = "xz")
 load("sdai-fits.rda")
 
-prep_u <- prepare_predictions(fit_uvsd)
-
-
-
+#prep_u <- prepare_predictions(fit_uvsd)
 # xxx <- calc_posterior_predictions_uvsdtsdai(2, prep_u)
 # str(xxx)
 
@@ -80,7 +77,7 @@ fit_gumbel <- brm(
   stanvars = sv_gumbelsdai,
   prior = gumbel_priors,
   init_r = 0.1,
-  control = list(adapt_delta = 0.9999, max_treedepth = 20)
+  control = list(adapt_delta = 0.9999999, max_treedepth = 20)
 )
 
 ##### plot
@@ -140,6 +137,19 @@ dplot2_gumbel <- res_gumbel %>%
 # dplot2 %>% 
 #   arrange(type)
 
+library(showtext)
+font_paths("fonts")
+
+# Add font
+font_add("Palatino Linotype", 
+         #regular="pala.ttf", 
+         regular = "asana-math.otf",
+         #regular = "palatinolinotype_roman.ttf",
+         italic = "palatinolinotype_italic.ttf", 
+         bold = "palatinolinotype_bold.ttf", 
+         bolditalic = "palatinolinotype_bolditalic.ttf")
+showtext_auto()
+
 theme_set(theme_bw(base_size = 12, base_family = "Palatino Linotype") + 
             theme(legend.position="bottom", 
                   panel.grid = element_blank()))
@@ -186,6 +196,51 @@ dplot2 %>%
     labels = c("Data", "Gaussian", expression(Gumbel[min]))
   ) +
   theme(legend.title = NULL) +
-  labs(x = expression(italic(p)[FA]), 
+  labs(x = expression(italic(p)["D-FA"]), 
        y = expression(italic(p)["D-HI"]~"&"~italic(p)["D-H"]))
 ggsave("fit-sdai.pdf", width = 8.1, height = 8, units = "cm")
+
+
+dplot2 %>%
+  ggplot(aes(x =  fa, y = value)) +
+  #geom_abline(slope = -1, intercept = 1, linetype = 2) +
+  annotate(geom = "polygon", 
+           x = c(-Inf, Inf, Inf), y = c(-Inf, Inf, -Inf), fill = "white") +
+  annotate(geom = "polygon", 
+           x = c(-Inf, Inf, Inf), y = c(-Inf, Inf, -Inf), 
+           fill = rgb(0.7, 0.7, 0.7, alpha = 0.4)) +
+  geom_abline(slope = 1, intercept = 0, linetype = 2) +
+  annotate(geom = "polygon", 
+           x = c(-Inf, Inf, Inf), y = c(-Inf, -Inf, 1/2 + 0.025), 
+           fill = rgb(0.3, 0.3, 0.3, alpha = 0.4)) +
+  geom_abline(slope = 1/2, intercept = 0, linetype = 2) +
+  geom_line(aes(group = name), linewidth = lsize) +
+  geom_point(size = psize, aes(shape = "Data", colour = "Data")) +
+  geom_point(aes(x =  fa, y = value,
+                 shape = "UVSD", colour = "UVSD"),
+             size = psize, stroke = stsize, data = dplot2_uvsdt) +
+  geom_point(aes(x =  fa, y = value,
+                 shape = "Gumbel", colour = "Gumbel"),
+             size = psize, stroke = stsize, data = dplot2_gumbel) +
+  annotate("label", x = 0.75, y = 0.15, label = "italic(N) == 48",
+           hjust = "center", vjust = "top", parse = TRUE,
+           family = "Palatino Linotype") +
+  coord_fixed(xlim = c(0, 1.05), ylim = c(0, 1.05), expand = FALSE) +
+  scale_x_continuous(breaks = c(0, 0.5, 1), labels = c("0", ".5", "1")) +
+  scale_y_continuous(breaks = c(0, 0.5, 1), labels = c("0", ".5", "1")) +
+  scale_color_manual(
+    name = '',
+    breaks = c('Data', 'UVSD', 'Gumbel'),
+    values = c('Data' = 'black', 'UVSD' = "#0072B2", 'Gumbel' = "#E69F00"),
+    labels = c("Data", expression(Gaussian[UV]), expression(Gumbel[min]))
+  ) +
+  scale_shape_manual(
+    name = '',
+    breaks = c('Data', 'UVSD', 'Gumbel'),
+    values = c('Data' = 19, 'Gumbel' = 3, 'UVSD' = 5),
+    labels = c("Data", expression(Gaussian[UV]), expression(Gumbel[min]))
+  ) +
+  theme(legend.title = NULL) +
+  labs(x = expression(italic(p)["D-FA"]), 
+       y = expression(italic(p)["D-HI"]~"&"~italic(p)["D-H"]))
+ggsave("fit-sdai_b.pdf", width = 8.3, height = 8, units = "cm")
