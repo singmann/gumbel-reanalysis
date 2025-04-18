@@ -1,14 +1,17 @@
 gumbelrank_stanvars <- "
   real gumbelrank_lpmf(int y, real mu, int r, int maxrank) {
-  real p;
+  real log_p;
   real g = mu;
   real m = maxrank;
   
   if (y == 0) {
     return 0;
   } else {
-    p = (exp(-g)*tgamma(m)*tgamma(r-1 + exp(-g))) / (tgamma(r)*tgamma(m + exp(-g)));
-    return y * log(p);
+    real e_neg_g = exp(-g);
+    log_p = (-g + lgamma(m) + lgamma(r - 1 + e_neg_g) - lgamma(r) - lgamma(m + e_neg_g));
+    return y * log_p;
+    ///p = (exp(-g)*tgamma(m)*tgamma(r-1 + exp(-g))) / (tgamma(r)*tgamma(m + exp(-g)));
+    ///return y * log(p);
   }
   }
 "

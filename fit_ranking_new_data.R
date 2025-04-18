@@ -386,9 +386,17 @@ for (i in seq_along(gumbel_samp_params)) {
   cat(names(rankfit_gumbel)[i], ": ", 
       sum(map_dbl(gumbel_samp_params[[i]], ~sum(.[1001:2000,"divergent__"]))), "\n")
 }
+# Number divergent transistions Gumbel:
+# Kellen (2012) :  0 
+# Kellen (2014, E1) :  0 
+# Kellen (2014, E2) :  2 
+# McAdoo (2016, E1) :  0 
+# McAdoo (2016, E2) :  0 
+# Malejka (2022, E1) :  1 
+# Meyer-Grant (2024) :  0 
 
 max(vapply(rankfit_gumbel, get_max_rhat, 0)) 
-# 1.007453
+# 1.009762
 
 rankfit_uvsdt <- list(
   fit_kks_uvsdt,
