@@ -418,8 +418,6 @@ for (i in seq_along(uvsdt_samp_params)) {
       "\n")
 }
 
-
-
 pred_uvsdt <- lapply(rankfit_uvsdt, posterior_epred)
 pred_gumbel <- lapply(rankfit_gumbel, posterior_epred)
 
