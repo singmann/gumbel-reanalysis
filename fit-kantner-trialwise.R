@@ -186,9 +186,9 @@ dat_plot %>%
   scale_x_continuous(breaks = c(0, 0.25, 0.5, 1), labels = c("0", ".25", ".5", "1")) +
   scale_y_continuous(breaks = c(0, 0.25, 0.5, 1), labels = c("0", ".25", ".5", "1")) +
   labs(x = expression(
-    paste("Predicted ", italic(R)[1]^{scriptstyle(paste("\u27E8", italic(m), "\u27E9"))})), 
+    paste("Predicted ", italic(R)[1]^{scriptstyle(paste("\u27E8", italic(K), "\u27E9"))})), 
        y = expression(
-         paste("Observed ", italic(R)[1]^{scriptstyle(paste("\u27E8", italic(m), "\u27E9"))})))
+         paste("Observed ", italic(R)[1]^{scriptstyle(paste("\u27E8", italic(K), "\u27E9"))})))
 ggsave("kantner-fit.pdf", 
        width = 8.1, height = 13.5, units = "cm")
 
