@@ -3,10 +3,17 @@ gumbelafctrial_stanvars <- "
   real gumbelafctrial_lpmf(int y, real mu, int m) {
     real g = mu;
     real r = 1;
+    
     real log_p;
     real e_neg_g = exp(-g);
-    log_p = (-g + lgamma(m) + lgamma(r - 1 + e_neg_g) - lgamma(r) - lgamma(m + e_neg_g));
+    // p = exp(-g) * beta(exp(-g), m);
+    log_p = -g + lbeta(e_neg_g, m);
     return bernoulli_logit_lpmf(y | log_p - log1m_exp(log_p));
+    
+    //real log_p;
+    //real e_neg_g = exp(-g);
+    //log_p = (-g + lgamma(m) + lgamma(r - 1 + e_neg_g) - lgamma(r) - lgamma(m + e_neg_g));
+    //return bernoulli_logit_lpmf(y | log_p - log1m_exp(log_p));
     
     //real p;
     //p = (exp(-g)*tgamma(m)*tgamma(r-1 + exp(-g))) / (tgamma(r)*tgamma(m + exp(-g)));
