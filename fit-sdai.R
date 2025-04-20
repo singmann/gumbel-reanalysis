@@ -7,6 +7,8 @@ theme_set(theme_bw(base_size = 15) +
 source("gumbelsdai-stan.R")
 source("uvsdtsdai-stan.R")
 
+sd_priors <- set_prior("student_t(5, 0, 2.5)", class = "sd", group = "subject_id")
+
 rawrev <- read_csv("data_norev.csv")
 
 d_sdai <- rawrev %>% 
@@ -55,7 +57,8 @@ fit_uvsd <- brm(
 gumbel_priors <- prior(normal(0,0.5), class = Intercept, dpar = "crc") + 
   prior(normal(-0.5,0.5), class = Intercept, dpar = "crl") +
   prior(normal(-0.5,0.5), class = Intercept, dpar = "crh") +
-  prior(student_t(3, 1, 2), class = Intercept)
+  prior(student_t(3, 1, 2), class = Intercept) +
+  sd_priors
 
 
 gumbel_formula <- brmsformula(
@@ -71,7 +74,7 @@ fit_gumbel <- brm(
   stanvars = sv_gumbelsdai,
   prior = gumbel_priors,
   init_r = 0.1,
-  control = list(adapt_delta = 0.9999999, max_treedepth = 20)
+  #control = list(adapt_delta = 0.99, max_treedepth = 20)
 )
 
 save(fit_uvsd, fit_gumbel, file = "sdai-fits.rda", compress = "xz")

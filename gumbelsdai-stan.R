@@ -1,66 +1,52 @@
 gumbelsdai_stanvars <- '
-    real int_inst_gumbel(real x,             // Function argument
-             real xc,            // Complement of function argument
-                                //  on the domain (defined later)
-             array[] real theta, // parameters
-             array[] real x_r,   // data (real)
-             array[] int x_i) {  // data (integer)
-     real g1 = theta[1];
-     real g2 = theta[2];
-     real m = 2;
-     return (gumbelmin_cdf(x | g2)^(m-1)) * gumbelmin_pdf(x, g1);
-   }
+  real pinternal1(real a, real b, real g1) {
+    return exp(-exp(-g1 + a) + b);
+  }
+  real pinternal2(real a, real b, real g1, real g2) {
+    return exp(-exp(-g1 + a) - exp(-g2 + a) + b);
+  }
+  real pfun(real l, real u, real g1, real g2) {
+    real denominator;
+    
+    denominator = exp(g1) + exp(g2);
+    
+    return (pinternal1(l, g1, g1) - pinternal1(u, g1, g1) + pinternal1(l, g2, g1) - pinternal1(u, g2, g1) + pinternal2(u, g2, g1, g2) - pinternal2(l, g2, g1, g2)) / denominator;
+  }
   real p_hit_gumbel(real l, real u) {
     return gumbelmin_cdf(u, 0)^2 - gumbelmin_cdf(l, 0)^2;
   }
   real gumbelsdai_lpmf(int y, real mu,
                    real crc, real crl, real crh, 
                    int y1, int y2, int y3, int y4, int y5, 
-                   int y6, int y7, int y8, int y9, int y10, int y11,
-                   data array[] real x_r, data array[] int x_i) {
+                   int y6, int y7, int y8, int y9, int y10, int y11) {
   int nthres = 3;
   vector[4] p_tabs;
   vector[8] p_tpres;
   array[4] int res_tabs = { y, y1, y2, y3 };
   array[8] int res_tpres = { y4, y5, y6, y7, y8, y9, y10, y11 };
+  int problimit = 100;
   
   vector[nthres] thres;
   
   // calculate thresholds
-  thres[1] = crc - (exp(crl));
+  thres[1] = crc - crl;
   thres[2] = crc;
-  thres[3] = crc + (exp(crh));
+  thres[3] = crc + crh;
   
-  p_tabs[1] = p_hit_gumbel(negative_infinity(), thres[1]);
+  p_tabs[1] = p_hit_gumbel(-problimit, thres[1]);
   p_tabs[2] = p_hit_gumbel(thres[1], thres[2]);
   p_tabs[3] = p_hit_gumbel(thres[2], thres[3]);
-  p_tabs[4] = p_hit_gumbel(thres[3], positive_infinity());
+  p_tabs[4] = p_hit_gumbel(thres[3], problimit);
   
-  p_tpres[1] = integrate_1d(int_inst_gumbel, negative_infinity(),
-                         thres[1],
-                         { 0, mu }, x_r, x_i);
-  p_tpres[2] = integrate_1d(int_inst_gumbel, thres[1],
-                         thres[2],
-                         { 0, mu }, x_r, x_i);
-  p_tpres[3] = integrate_1d(int_inst_gumbel, thres[2],
-                         thres[3],
-                         { 0, mu }, x_r, x_i);
-  p_tpres[4] = integrate_1d(int_inst_gumbel, thres[3],
-                         positive_infinity(),
-                         { 0, mu }, x_r, x_i);
+  p_tpres[1] = pfun(-problimit, thres[1], 0, mu);
+  p_tpres[2] = pfun(thres[1], thres[2], 0, mu);
+  p_tpres[3] = pfun(thres[2], thres[3],  0, mu);
+  p_tpres[4] = pfun(thres[3], problimit, 0, mu);
   
-  p_tpres[5] = integrate_1d(int_inst_gumbel, negative_infinity(),
-                         thres[1],
-                         { mu, 0 }, x_r, x_i);
-  p_tpres[6] = integrate_1d(int_inst_gumbel, thres[1],
-                         thres[2],
-                         { mu, 0 }, x_r, x_i);
-  p_tpres[7] = integrate_1d(int_inst_gumbel, thres[2],
-                         thres[3],
-                         { mu, 0 }, x_r, x_i);
-  p_tpres[8] = integrate_1d(int_inst_gumbel, thres[3],
-                         positive_infinity(),
-                         { mu, 0 }, x_r, x_i);
+  p_tpres[5] = pfun(-problimit, thres[1], mu, 0);
+  p_tpres[6] = pfun(thres[1], thres[2], mu, 0);
+  p_tpres[7] = pfun(thres[2], thres[3],  mu, 0);
+  p_tpres[8] = pfun(thres[3], problimit, mu, 0);
   
   return multinomial_lpmf(res_tabs | p_tabs) + multinomial_lpmf(res_tpres | p_tpres);
   }
@@ -68,20 +54,14 @@ gumbelsdai_stanvars <- '
 gumbelsdai_family <- custom_family(
   name = "gumbelsdai", 
   dpars = c("mu", "crc", "crl", "crh"), 
-  links = c("identity", rep("identity", 3)), lb = c(NA, rep(NA, 3)),
-  type = "int", vars = c(paste0("vint", 1:11, "[n]"), "x_r", "x_i")
+  links = c("identity", "identity", rep("log", 2)), 
+  lb = c(NA, NA, rep(0, 2)), 
+  type = "int", vars = paste0("vint", 1:11, "[n]")
 )
-gumbelsdai_stanvars_tdata <- "
-    array[0] real x_r;
-    array[0] int x_i;
-"
 
 source("gumbelmin_dist-stan.R")
 sv_gumbelsdai <- stanvar(scode = gumbelmin_dist, block = "functions") +
-  stanvar(scode = gumbelsdai_stanvars, block = "functions") +
-  stanvar(scode = gumbelsdai_stanvars_tdata, block = "tdata")
-
-
+  stanvar(scode = gumbelsdai_stanvars, block = "functions") 
 
 calc_posterior_predictions_gumbelsdai <- function(i, prep) {
   pgumbmin = function(p, g=0){
@@ -111,9 +91,9 @@ calc_posterior_predictions_gumbelsdai <- function(i, prep) {
   p_tabs <- matrix(NA_real_, nrow = OUTLEN, ncol = 4)
   p_tpres <- matrix(NA_real_, nrow = OUTLEN, ncol = 8)
   
-  thres[,1] = crc - (exp(crl));
+  thres[,1] = crc - crl;
   thres[,2] = crc;
-  thres[,3] = crc + (exp(crh));
+  thres[,3] = crc + crh;
   
   p_tabs[,1] = p_hit_gumb(-Inf, thres[,1]);
   p_tabs[,2] = p_hit_gumb(thres[,1], thres[,2]);
