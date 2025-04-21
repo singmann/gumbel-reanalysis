@@ -7,6 +7,8 @@ theme_set(theme_bw(base_size = 15) +
 #load("dat-prep.rda")
 source("gumbel8agg-stan.R")
 source("uvsdt8agg-stan.R")
+source("gumbel8agglog-stan.R")
+source("uvsdt8agglog-stan.R")
 
 sd_priors <- set_prior("student_t(5, 0, 2.5)", class = "sd", group = "id")
 
@@ -63,8 +65,17 @@ gumbel_formula_8 <- brmsformula(
   crc ~ (1|p|id), 
   crlm ~ (1|p|id), crll ~ (1|p|id), crlx ~ (1|p|id), 
   crhm ~ (1|p|id), crhh ~ (1|p|id), crhx ~ (1|p|id),
+  family = gumbel8agglog_family
+)
+
+gumbel_formula_8_nolog <- brmsformula(
+  OLD_4new | vint(OLD_3new, OLD_2new, OLD_1new, OLD_1old, OLD_2old, OLD_3old, OLD_4old, NEW_4new, NEW_3new, NEW_2new, NEW_1new, NEW_1old, NEW_2old, NEW_3old, NEW_4old) ~ 1 + (1|p|id), 
+  crc ~ (1|p|id), 
+  crlm ~ (1|p|id), crll ~ (1|p|id), crlx ~ (1|p|id), 
+  crhm ~ (1|p|id), crhh ~ (1|p|id), crhx ~ (1|p|id),
   family = gumbel8agg_family
 )
+
 
 gumbel_priors_8 <- prior(normal(0,0.5), class = Intercept, dpar = "crc") + 
   prior(normal(-0.5,0.5), class = Intercept, dpar = "crlm") +
@@ -77,6 +88,15 @@ gumbel_priors_8 <- prior(normal(0,0.5), class = Intercept, dpar = "crc") +
   sd_priors
 
 uvsdt_formula_8 <- brmsformula(
+  OLD_4new | vint(OLD_3new, OLD_2new, OLD_1new, OLD_1old, OLD_2old, OLD_3old, OLD_4old, NEW_4new, NEW_3new, NEW_2new, NEW_1new, NEW_1old, NEW_2old, NEW_3old, NEW_4old) ~ 1 + (1|p|id), 
+  discsignal ~ 1 + (1|p|id), 
+  crc ~ (1|p|id), 
+  crlm ~ (1|p|id), crll ~ (1|p|id), crlx ~ (1|p|id), 
+  crhm ~ (1|p|id), crhh ~ (1|p|id), crhx ~ (1|p|id),
+  family = uvsdt8agglog_family
+)
+
+uvsdt_formula_8_nolog <- brmsformula(
   OLD_4new | vint(OLD_3new, OLD_2new, OLD_1new, OLD_1old, OLD_2old, OLD_3old, OLD_4old, NEW_4new, NEW_3new, NEW_2new, NEW_1new, NEW_1old, NEW_2old, NEW_3old, NEW_4old) ~ 1 + (1|p|id), 
   discsignal ~ 1 + (1|p|id), 
   crc ~ (1|p|id), 
@@ -112,20 +132,29 @@ for (i in seq_along(dataset8)) {
   
   roc8_fits_gumbel[[i]] <- brm(
     gumbel_formula_8, data = roc8_data[[i]], 
-    stanvars = sv_gumbel8agg, 
+    stanvars = sv_gumbel8agglog, 
     prior = gumbel_priors_8,
     iter = iter, warmup = warmup,
-    init_r = 0.25, control = list(adapt_delta = 0.999999, max_treedepth = 20)
+    init_r = 0.25, 
+    #control = list(adapt_delta = 0.999999, max_treedepth = 20)
   )
-
-
   roc8_fits_uvsdt[[i]] <- brm(
     uvsdt_formula_8, data = roc8_data[[i]], 
-    stanvars = sv_uvsdt8agg, 
+    stanvars = sv_uvsdt8agglog, 
     prior = uvsdt_priors_8,
     iter = iter, warmup = warmup,
-    init_r = 0.5, control = list(adapt_delta = 0.999999, max_treedepth = 20)
+    init_r = 0.5, 
+    #control = list(adapt_delta = 0.999999, max_treedepth = 20)
   )
+
+  # roc8_fits_uvsdt[[i]] <- brm(
+  #   uvsdt_formula_8_nolog, data = roc8_data[[i]], 
+  #   stanvars = sv_uvsdt8agg, 
+  #   prior = uvsdt_priors_8,
+  #   iter = iter, warmup = warmup,
+  #   init_r = 0.5, 
+  #   #control = list(adapt_delta = 0.999999, max_treedepth = 20)
+  # )
 }
 # xxx <- map(roc8_fits_gumbel, ~rstan::get_sampler_params(.$fit))
 # for (i in seq_along(dataset8)) {

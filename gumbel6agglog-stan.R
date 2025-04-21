@@ -1,0 +1,213 @@
+source("gumbelmin_dist-stan.R")
+## cat(gumbelmin_dist)
+gumbel6agglog_stanvars <- '
+   real gumbel6agglog_lpmf(int y, real mu, 
+                   real crc, real crlm, real crll, real crhm, real crhh, 
+                   int y1, int y2, int y3, int y4, int y5, 
+                   int y6, int y7, int y8, int y9, int y10, int y11) {
+    int nthres = 5;
+    vector[nthres+1] pold;
+    vector[nthres+1] pnew;
+    array[6] int oldvec = { y, y1, y2, y3, y4, y5 };
+    array[6] int newvec = { y6, y7, y8, y9, y10, y11 };
+    real tmp;
+
+    vector[nthres] thres;
+    
+    // calculate thresholds
+    thres[1] = crc - (crlm + crll);
+    thres[2] = crc - (crlm);
+    thres[3] = crc;
+    thres[4] = crc + (crhm);
+    thres[5] = crc + (crhm + crhh);
+     
+    // calculate probabilities
+    pold[1] = gumbelmin_lcdf(thres[1]| mu);
+    for (i in 2:nthres) {
+      tmp = gumbelmin_lcdf(thres[i]| mu);
+      pold[i] = tmp + log1m_exp(gumbelmin_lcdf(thres[i-1]| mu) - tmp);
+    }
+    pold[6] = gumbelmin_lccdf(thres[nthres] | mu);
+    pnew[1] = gumbelmin_lcdf(thres[1]| 0);
+    for (i in 2:nthres) {
+      tmp = gumbelmin_lcdf(thres[i]| 0);
+      pnew[i] = tmp + log1m_exp(gumbelmin_lcdf(thres[i-1]| 0) - tmp);
+    }
+    pnew[6] = gumbelmin_lccdf(thres[nthres] | 0);
+    return multinomial_logit_lpmf(oldvec | pold ) + 
+      multinomial_logit_lpmf(newvec | pnew );
+   }
+'
+
+gumbel6agglog_family <- custom_family(
+  name = "gumbel6agglog", 
+  dpars = c("mu", "crc", "crlm", "crll", "crhm", "crhh"), 
+  links = c("identity", "identity", rep("log", 4)), 
+  lb = c(NA, NA, rep(0, 4)),
+  type = "int", vars = paste0("vint", 1:11, "[n]")
+)
+
+sv_gumbel6agglog <- stanvar(scode = gumbelmin_dist, block = "functions") + 
+  stanvar(scode = gumbel6agglog_stanvars, block = "functions")
+
+calc_posterior_predictions_gumbel6agglog <- function(i, prep) {
+  gumbelmin <- function(x, mu, disc) {
+    return(1 - extraDistr::pgumbel(-x,-mu,disc))
+  }
+  mu <- brms::get_dpar(prep, "mu", i = i)
+  #discsignal <- brms::get_dpar(prep, "discsignal", i = i)
+  crc <- brms::get_dpar(prep, "crc", i = i)
+  crlm <- brms::get_dpar(prep, "crlm", i = i)
+  crll <- brms::get_dpar(prep, "crll", i = i)
+  crhm <- brms::get_dpar(prep, "crhm", i = i)
+  crhh <- brms::get_dpar(prep, "crhh", i = i)
+
+  OUTLEN <- length(mu)
+  
+  disc <- 1
+  nthres <- 5
+  thres <- matrix(NA_real_, nrow = OUTLEN, ncol = nthres)
+  pold <- matrix(NA_real_, nrow = OUTLEN, ncol = nthres+1)
+  pnew <- matrix(NA_real_, nrow = OUTLEN, ncol = nthres+1)
+  
+  thres[,1] = crc - ((crlm) + (crll));
+  thres[,2] = crc - ((crlm));
+  thres[,3] = crc;
+  thres[,4] = crc + ((crhm));
+  thres[,5] = crc + ((crhm) + (crhh));
+  
+  # calculate probabilities
+  pold[,1] = gumbelmin(thres[,1], mu, disc)
+  #ordinal::pgumbel(thres[,1], mu, disc, max = FALSE) ## does NOT 
+  for (j in 2:nthres) {
+    pold[,j] = gumbelmin(thres[,j], mu, disc) - gumbelmin(thres[,j-1], mu, disc);
+  }
+  pold[,6] = 1 - gumbelmin(thres[,nthres], mu, disc);
+
+  pnew[,1] = gumbelmin(thres[,1], 0, disc);
+  for (j in 2:nthres) {
+    pnew[,j] = gumbelmin(thres[,j], 0, disc) - gumbelmin(thres[,j-1], 0, disc);
+  }
+  pnew[,6] = 1 - gumbelmin(thres[,nthres], 0, disc);
+  return(list(
+    pold = pold, pnew = pnew
+  ))
+}
+
+log_lik_gumbel6agglog <- function(i, prep) {
+  use <- calc_posterior_predictions_gumbel6agglog(i = i, prep = prep)
+  oldvec <- c(prep$data$Y[i], prep$data$vint1[i], prep$data$vint2[i], 
+              prep$data$vint3[i], prep$data$vint4[i], prep$data$vint5[i])
+  newvec <- c(prep$data$vint6[i], prep$data$vint7[i], prep$data$vint8[i], 
+              prep$data$vint9[i], prep$data$vint10[i], prep$data$vint11[i])
+  extraDistr::dmnom(x = oldvec, size = sum(oldvec), prob = use$pold, log = TRUE) + 
+     extraDistr::dmnom(x = newvec, size = sum(newvec), prob = use$pnew, log = TRUE)
+}
+
+posterior_epred_gumbel6agglog <- function(prep) {
+  nobs <- prep$nobs
+  out <- array(NA_real_, dim = c(prep$ndraws, prep$nobs, 12), 
+               dimnames = list(seq(prep$ndraws), seq(prep$nobs), 
+                               c(colnames(prep$data$oldmat), colnames(prep$data$newmat))))
+  for (i in seq_len(nobs)) {
+    tmp <- calc_posterior_predictions_gumbel6agglog(i = i, prep = prep)
+    out[,i,] <- c(tmp$pold, tmp$pnew)
+  }
+  return(out)
+}
+
+posterior_predict_gumbel6agglog <- function(i, prep, ...) {
+  use <- calc_posterior_predictions_gumbel6agglog(i = i, prep = prep)
+  oldvec <- c(prep$data$Y[i], prep$data$vint1[i], prep$data$vint2[i], 
+              prep$data$vint3[i], prep$data$vint4[i], prep$data$vint5[i])
+  newvec <- c(prep$data$vint6[i], prep$data$vint7[i], prep$data$vint8[i], 
+              prep$data$vint9[i], prep$data$vint10[i], prep$data$vint11[i])
+  lout <- nrow(use$pold)
+  out <- cbind(extraDistr::rmnom(n = rep(1, lout), size = sum(oldvec), prob = use$pold), 
+               extraDistr::rmnom(n = rep(1, lout), size = sum(oldvec), prob = use$pnew))
+  colnames(out) <- c(colnames(prep$data$oldmat), colnames(prep$data$newmat))
+  #browser()
+  lapply(seq_len(nrow(out)), function(i) out[i,])
+  #apply(out, 1, function(x) list(x))
+  #out[,1]
+}
+
+# log_lik_gumbel6agglog <- function(i, prep) {
+#   gumbelmin <- function(x, mu, disc) {
+#     return(1 - extraDistr::pgumbel(-x,mu,disc))
+#   }
+#   mu <- brms::get_dpar(prep, "mu", i = i)
+#   #discsignal <- brms::get_dpar(prep, "discsignal", i = i)
+#   crc <- brms::get_dpar(prep, "crc", i = i)
+#   crlm <- brms::get_dpar(prep, "crlm", i = i)
+#   crll <- brms::get_dpar(prep, "crll", i = i)
+#   crhm <- brms::get_dpar(prep, "crhm", i = i)
+#   crhh <- brms::get_dpar(prep, "crhh", i = i)
+# 
+#   oldvec <- prep$data$oldmat[i,]
+#   newvec <- prep$data$newmat[i,]
+#   OUTLEN <- length(mu)
+#   
+#   disc <- 1
+#   nthres <- 5
+#   thres <- matrix(NA_real_, nrow = OUTLEN, ncol = nthres)
+#   pold <- matrix(NA_real_, nrow = OUTLEN, ncol = nthres+1)
+#   pnew <- matrix(NA_real_, nrow = OUTLEN, ncol = nthres+1)
+#   
+#   thres[,1] = crc - (exp(crlm) + exp(crll));
+#   thres[,2] = crc - (exp(crlm));
+#   thres[,3] = crc;
+#   thres[,4] = crc + (exp(crhm));
+#   thres[,5] = crc + (exp(crhm) + exp(crhh));
+#   
+#   # calculate probabilities
+#   pold[,1] = gumbelmin(thres[,1], mu, disc)
+#   #ordinal::pgumbel(thres[,1], mu, disc, max = FALSE) ## does NOT 
+#   for (j in 2:nthres) {
+#     pold[,j] = gumbelmin(thres[,j], mu, disc) - gumbelmin(thres[,j-1], mu, disc);
+#   }
+#   pold[,6] = 1 - gumbelmin(thres[,nthres], mu, disc);
+# 
+#   pnew[,1] = gumbelmin(thres[,1], 0, disc);
+#   for (j in 2:nthres) {
+#     pnew[,j] = gumbelmin(thres[,j], 0, disc) - gumbelmin(thres[,j-1], 0, disc);
+#   }
+#   pnew[,6] = 1 - gumbelmin(thres[,nthres], 0, disc);
+#   
+#   #browser()
+#   extraDistr::dmnom(x = oldvec, size = sum(oldvec), prob = pold, log = TRUE) + 
+#     extraDistr::dmnom(x = newvec, size = sum(newvec), prob = pnew, log = TRUE)
+# }
+
+# posterior_predict_gumbel6agglog <- function(i, prep, ...) {
+#   mu <- brms::get_dpar(prep, "mu", i = i)
+#   #discsignal <- brms::get_dpar(prep, "discsignal", i = i)
+#   crc <- brms::get_dpar(prep, "crc", i = i)
+#   crlm <- brms::get_dpar(prep, "crlm", i = i)
+#   crll <- brms::get_dpar(prep, "crll", i = i)
+#   crhm <- brms::get_dpar(prep, "crhm", i = i)
+#   crhh <- brms::get_dpar(prep, "crhh", i = i)
+#   itemtype <- prep$data$vint1[i]
+#   nsamples <- length(mu)
+#   nthres <- 5
+#   thres <- matrix(NA_real_, nrow = nsamples, ncol = nthres)
+#   p <- matrix(NA_real_, nrow = nsamples, ncol = nthres+1)
+#   disc = rep(1, nsamples)
+#   thres[,1] = crc - (exp(crlm) + exp(crll));
+#   thres[,2] = crc - (exp(crlm));
+#   thres[,3] = crc;
+#   thres[,4] = crc + (exp(crhm));
+#   thres[,5] = crc + (exp(crhm) + exp(crhh));
+#   
+#   for (y in 1:(nthres+1)) {
+#     if (y == 1) {
+#       p[,y] = ordinal::pgumbel(thres[,1], mu, disc, max = FALSE)
+#     } else if (y == nthres + 1) {
+#       p[,y] = 1 - ordinal::pgumbel(thres[,nthres], mu, disc, max = FALSE)
+#     } else {
+#       p[,y] = ordinal::pgumbel(thres[,y], mu, disc, max = FALSE) -
+#           ordinal::pgumbel(thres[,y-1], mu, disc, max = FALSE)
+#     }
+#   }
+#   apply(p, 1, extraDistr::rcat, n = 1)
+# }

@@ -1,0 +1,128 @@
+uvsdt6agglog_stanvars <- "
+  real uvsdt6agglog_lpmf(int y, real mu, real discsignal, 
+                   real crc, real crlm, real crll, real crhm, real crhh, 
+                   int y1, int y2, int y3, int y4, int y5, 
+                   int y6, int y7, int y8, int y9, int y10, int y11) {
+  int nthres = 5;
+  real disc = 1/discsignal;
+  vector[nthres+1] pold;
+  vector[nthres+1] pnew;
+  array[6] int oldvec = { y, y1, y2, y3, y4, y5 };
+  array[6] int newvec = { y6, y7, y8, y9, y10, y11 };
+  real tmp;
+  vector[nthres] thres;
+  
+  // calculate thresholds
+  thres[1] = crc - (crlm + crll);
+  thres[2] = crc - (crlm);
+  thres[3] = crc;
+  thres[4] = crc + (crhm);
+  thres[5] = crc + (crhm + crhh);
+   
+  // calculate probabilities
+  pold[1] = normal_lcdf(thres[1] | mu, disc);
+  for (i in 2:nthres) {
+    tmp = normal_lcdf(thres[i] | mu, disc);
+    pold[i] = tmp + log1m_exp(normal_lcdf(thres[i-1]| mu, disc) - tmp);
+  }
+  pold[6] = normal_lccdf(thres[nthres] | mu, disc); 
+  
+  pnew[1] = normal_lcdf(thres[1] | 0, 1);
+  for (i in 2:nthres) {
+    tmp = normal_lcdf(thres[i] | 0, 1);
+    pnew[i] = tmp + log1m_exp(normal_lcdf(thres[i-1]| 0, 1) - tmp);
+  }
+  pnew[6] = normal_lccdf(thres[nthres] | 0, 1);
+  return multinomial_logit_lpmf(oldvec | pold) + 
+      multinomial_logit_lpmf(newvec | pnew );
+  }
+"
+
+uvsdt6agglog_family <- custom_family(
+  name = "uvsdt6agglog", 
+  dpars = c("mu", "discsignal", "crc", "crlm", "crll", "crhm", "crhh"), 
+  links = c("identity", "log", "identity", rep("log", 4)), 
+  lb = c(NA, 0, NA, rep(0, 4)),
+  type = "int", vars = paste0("vint", 1:11, "[n]")
+)
+sv_uvsdt6agglog <- stanvar(scode = uvsdt6agglog_stanvars, block = "functions")
+
+calc_posterior_predictions_uvsdt6agglog <- function(i, prep) {
+  mu <- brms::get_dpar(prep, "mu", i = i)
+  discsignal <- 1/brms::get_dpar(prep, "discsignal", i = i)
+  crc <- brms::get_dpar(prep, "crc", i = i)
+  crlm <- brms::get_dpar(prep, "crlm", i = i)
+  crll <- brms::get_dpar(prep, "crll", i = i)
+  crhm <- brms::get_dpar(prep, "crhm", i = i)
+  crhh <- brms::get_dpar(prep, "crhh", i = i)
+
+  OUTLEN <- length(mu)
+  
+  nthres <- 5
+  thres <- matrix(NA_real_, nrow = OUTLEN, ncol = nthres)
+  pold <- matrix(NA_real_, nrow = OUTLEN, ncol = nthres+1)
+  pnew <- matrix(NA_real_, nrow = OUTLEN, ncol = nthres+1)
+  
+  thres[,1] = crc - ((crlm) + (crll));
+  thres[,2] = crc - ((crlm));
+  thres[,3] = crc;
+  thres[,4] = crc + ((crhm));
+  thres[,5] = crc + ((crhm) + (crhh));
+  
+  # calculate probabilities
+  pold[,1] = pnorm(thres[,1], mu, discsignal)
+  for (j in 2:nthres) {
+    pold[,j] = pnorm(thres[,j], mu, discsignal) -
+      pnorm(thres[,j-1], mu, discsignal)
+  }
+  pold[,6] = 1 - pnorm(thres[,nthres], mu, discsignal)
+
+  pnew[,1] = pnorm(thres[,1])
+  for (j in 2:nthres) {
+    pnew[,j] = pnorm(thres[,j]) - pnorm(thres[,j - 1])
+  }
+  pnew[,6] = 1 - pnorm(thres[,nthres]);
+  return(list(
+    pold = pold, pnew = pnew
+  ))
+}
+
+log_lik_uvsdt6agglog <- function(i, prep) {
+  use <- calc_posterior_predictions_uvsdt6agglog(i = i, prep = prep)
+  oldvec <- c(prep$data$Y[i], prep$data$vint1[i], prep$data$vint2[i], 
+              prep$data$vint3[i], prep$data$vint4[i], prep$data$vint5[i])
+  newvec <- c(prep$data$vint6[i], prep$data$vint7[i], prep$data$vint8[i], 
+              prep$data$vint9[i], prep$data$vint10[i], prep$data$vint11[i])
+  extraDistr::dmnom(x = oldvec, size = sum(oldvec), prob = use$pold, log = TRUE) + 
+     extraDistr::dmnom(x = newvec, size = sum(newvec), prob = use$pnew, log = TRUE)
+}
+
+posterior_epred_uvsdt6agglog <- function(prep) {
+  nobs <- prep$nobs
+  out <- array(NA_real_, dim = c(prep$ndraws, prep$nobs, 12), 
+               dimnames = list(seq(prep$ndraws), seq(prep$nobs), 
+                               c(colnames(prep$data$oldmat), colnames(prep$data$newmat))))
+  for (i in seq_len(nobs)) {
+    tmp <- calc_posterior_predictions_uvsdt6agglog(i = i, prep = prep)
+    out[,i,] <- c(tmp$pold, tmp$pnew)
+  }
+  return(out)
+}
+
+posterior_predict_uvsdt6agglog <- function(i, prep, ...) {
+  use <- calc_posterior_predictions_uvsdt6agglog(i = i, prep = prep)
+  oldvec <- c(prep$data$Y[i], prep$data$vint1[i], prep$data$vint2[i], 
+              prep$data$vint3[i], prep$data$vint4[i], prep$data$vint5[i])
+  newvec <- c(prep$data$vint6[i], prep$data$vint7[i], prep$data$vint8[i], 
+              prep$data$vint9[i], prep$data$vint10[i], prep$data$vint11[i])
+  
+  lout <- nrow(use$pold)
+  out <- cbind(extraDistr::rmnom(n = rep(1, lout), size = sum(oldvec), prob = use$pold), 
+               extraDistr::rmnom(n = rep(1, lout), size = sum(oldvec), prob = use$pnew))
+  colnames(out) <- c(colnames(prep$data$oldmat), colnames(prep$data$newmat))
+  #browser()
+  lapply(seq_len(nrow(out)), function(i) out[i,])
+  #apply(out, 1, function(x) list(x))
+  #out[,1]
+}
+
