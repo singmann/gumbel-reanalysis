@@ -5,7 +5,6 @@ options(mc.cores = parallel::detectCores())
 theme_set(theme_bw(base_size = 12) + 
             theme(legend.position="bottom"))
 
-load("malejka-broeder.rda")
 source("bin-roc-data.R")
 source("gumbelbin-stan.R")
 source("uvsdtbin-stan.R")
@@ -34,27 +33,21 @@ bdin_long <- bdin_all %>%
   mutate(Nold = hit + miss, 
          Nnew = fa + cr)
 
-mb_extra <- bind_rows(mbe1, mbe3) %>% 
-  select(experiment, Subject, BaseRate, everything()) %>% 
-  mutate(Subject = as.character(Subject))
-colnames(mb_extra) <- colnames(bdin_long)
-bdin_long <- bind_rows(bdin_long, mb_extra)
 bdin_long <- bdin_long %>% 
   mutate(exp = factor(
     exp, 
     levels = c("Broder E3", 
                "Dube E1 pictures", "Dube E1 word", "Dube E2", 
-                "e1", "Malejka_e2", "e3",
+               "Malejka_e2",
                "Van Zandt E1 slow", "Van Zandt E1 fast", "Van Zandt E2"), 
     labels = c("Broder (2009, E3)", 
                "Dube (2012, E1a-P)", "Dube (2012, E1a-W)", "Dube (2012, E2)", 
-                "Malejka (2019, E1)", "Malejka (2019, E2)", "Malejka (2019, E3)",
+               "Malejka (2019, E2)", 
                "Van Zandt (2000, E1-F)", "Van Zandt (2000, E1-S)", 
                "Van Zandt (2000, E2)")))
 
 dataset_all <- levels(bdin_long$exp)
-dataset_all <- dataset_all[-which(dataset_all %in% c("Malejka (2019, E1)", 
-                                                     "Malejka (2019, E3)"))] 
+
 
 gumbel_formula_2 <- brmsformula(
   hit | vint(Nold, fa, Nnew) ~ 1 + (1|p|pid), 
