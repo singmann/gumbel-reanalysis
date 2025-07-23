@@ -155,7 +155,7 @@ theme_set(theme_bw(base_size = 12, base_family = "Palatino Linotype") +
                   panel.grid = element_blank()))
 psize <- 3.5
 lsize <- 1.5
-stsize <- 0.5
+stsize <- 1.0
 dplot2 %>%
   ggplot(aes(x =  fa, y = value)) +
   #geom_abline(slope = -1, intercept = 1, linetype = 2) +

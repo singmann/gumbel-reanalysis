@@ -151,6 +151,7 @@ bin_n <- left_join(bin_n, unique(select(plot_data_2, exp, newexp)))
 
 psize <- 3.5
 lsize <- 1.5
+ssize <- 1.0
 plot_data_2 %>%
   ggplot(aes(x =  observed_NEW, y = observed_OLD)) +
   geom_abline(slope = -1, intercept = 1, linetype = 2) +
@@ -162,9 +163,9 @@ plot_data_2 %>%
   geom_line(aes(group = 1), linewidth = lsize) +
   geom_point(size = psize, aes(shape = "Data", colour = "Data")) +
   geom_point(aes(x = gumbel_NEW, y = gumbel_OLD, 
-                 shape = "Gumbel", colour = "Gumbel"), size = psize) +
+                 shape = "Gumbel", colour = "Gumbel"), size = psize, stroke = ssize) +
   geom_point(aes(x = uvsd_NEW, y = uvsd_OLD, 
-                 shape = "UVSD", colour = "UVSD"), size = psize) + 
+                 shape = "UVSD", colour = "UVSD"), size = psize, stroke = ssize) + 
   geom_label(mapping = aes(x = 0.75, y = 0.15, label = n_text), 
              data = bin_n, hjust = "center", vjust = "top", parse = TRUE,
              family = "Palatino Linotype") +

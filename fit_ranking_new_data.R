@@ -396,7 +396,7 @@ for (i in seq_along(gumbel_samp_params)) {
 # Meyer-Grant (2024) :  0 
 
 max(vapply(rankfit_gumbel, get_max_rhat, 0)) 
-# 1.009762
+# 1.007453
 
 rankfit_uvsdt <- list(
   fit_kks_uvsdt,
@@ -460,7 +460,7 @@ bin_n <- all_rank_data %>%
 
 psize <- 3.5
 lsize <- 1.5
-
+ssize <- 1.0
 plrd1 <- plot_rank_data %>%
   filter(exp %in% c("Kellen (2014, E2)", 
                     "McAdoo (2016, E1)", "McAdoo (2016, E2)"))
@@ -491,9 +491,9 @@ p1b <- plrd1 %>%
   geom_line(aes(group = strength, linetype = strength), linewidth = lsize) +
   geom_point(size = psize, aes(shape = "Data", colour = "Data")) +
   geom_point(aes(y = gumbel, 
-                 shape = "Gumbel", colour = "Gumbel"), size = psize) +
+                 shape = "Gumbel", colour = "Gumbel"), size = psize, stroke = ssize) +
   geom_point(aes(y = uvsd, 
-                 shape = "UVSD", colour = "UVSD"), size = psize) + 
+                 shape = "UVSD", colour = "UVSD"), size = psize, stroke = ssize) + 
   geom_label(mapping = aes(x = Inf, y = Inf, label = n_text),
              data = filter(bin_n, exp %in% unique(plrd1$exp)),
              hjust = 1.1,
@@ -531,9 +531,9 @@ p2b <- plrd2 %>%
   geom_line(aes(group = strength, linetype = strength), linewidth = lsize) +
   geom_point(size = psize, aes(shape = "Data", colour = "Data")) +
   geom_point(aes(y = gumbel, 
-                 shape = "Gumbel", colour = "Gumbel"), size = psize) +
+                 shape = "Gumbel", colour = "Gumbel"), size = psize, stroke = ssize) +
   geom_point(aes(y = uvsd, 
-                 shape = "UVSD", colour = "UVSD"), size = psize) + 
+                 shape = "UVSD", colour = "UVSD"), size = psize, stroke = ssize) + 
   geom_label(mapping = aes(x = Inf, y = Inf, label = n_text),
              data = filter(bin_n, exp %in% unique(plrd2$exp)),
              hjust = 1.1,
@@ -584,9 +584,9 @@ p3b_1 <- plrd3 %>%
   geom_line(aes(group = maxrank, linetype = maxrank), linewidth = lsize) +
   geom_point(size = psize, aes(shape = "Data", colour = "Data")) +
   geom_point(aes(y = gumbel, 
-                 shape = "Gumbel", colour = "Gumbel"), size = psize) +
+                 shape = "Gumbel", colour = "Gumbel"), size = psize, stroke = ssize) +
   geom_point(aes(y = uvsd, 
-                 shape = "UVSD", colour = "UVSD"), size = psize) + 
+                 shape = "UVSD", colour = "UVSD"), size = psize, stroke = ssize) + 
   geom_label(mapping = aes(x = Inf, y = Inf, label = n_text),
              data = newn,
              hjust = 1.1,
@@ -625,9 +625,9 @@ p3b_2 <- plrd3 %>%
   geom_line(aes(group = maxrank, linetype = maxrank), linewidth = lsize) +
   geom_point(size = psize, aes(shape = "Data", colour = "Data")) +
   geom_point(aes(y = gumbel, 
-                 shape = "Gumbel", colour = "Gumbel"), size = psize) +
+                 shape = "Gumbel", colour = "Gumbel"), size = psize, stroke = ssize) +
   geom_point(aes(y = uvsd, 
-                 shape = "UVSD", colour = "UVSD"), size = psize) + 
+                 shape = "UVSD", colour = "UVSD"), size = psize, stroke = ssize) + 
   #facet_wrap(vars(newexp), ncol = 1, dir = "v", scales = "free_y") +
   facet_wrap(vars(newexp2), nrow = 1, dir = "v", scales = "free_x", 
              labeller = "label_parsed") + 
@@ -662,9 +662,9 @@ p3b_3 <- plrd3 %>%
   geom_line(aes(group = maxrank, linetype = maxrank), linewidth = lsize) +
   geom_point(size = psize, aes(shape = "Data", colour = "Data")) +
   geom_point(aes(y = gumbel, 
-                 shape = "Gumbel", colour = "Gumbel"), size = psize) +
+                 shape = "Gumbel", colour = "Gumbel"), size = psize, stroke = ssize) +
   geom_point(aes(y = uvsd, 
-                 shape = "UVSD", colour = "UVSD"), size = psize) + 
+                 shape = "UVSD", colour = "UVSD"), size = psize, stroke = ssize) + 
   #facet_wrap(vars(newexp), ncol = 1, dir = "v", scales = "free_y") +
   #facet_wrap(vars(newexp), nrow = 1, dir = "v", scales = "free_x") + 
   facet_wrap(vars(newexp2), nrow = 1, dir = "v", scales = "free_x", 
@@ -694,50 +694,50 @@ p3b_1/p3b_2/p3b_3 +
   plot_layout(guides = 'collect', axes = "collect") 
 ggsave("rank-plot-4b.pdf", width = 8.5, height = 16.5, units = "cm")
 
-p3b <- plrd3 %>%
-  ggplot(aes(x = rank, y = prob)) +
-  geom_hline(aes(yintercept = guess), 
-             colour = rgb(0.7, 0.7, 0.7, alpha = 0.4), data = plrd3mr,
-             linetype = 2) +
-  geom_line(aes(group = maxrank, linetype = maxrank), linewidth = lsize) +
-  geom_point(size = psize, aes(shape = "Data", colour = "Data")) +
-  geom_point(aes(y = gumbel, 
-                 shape = "Gumbel", colour = "Gumbel"), size = psize) +
-  geom_point(aes(y = uvsd, 
-                 shape = "UVSD", colour = "UVSD"), size = psize) + 
-  geom_label(mapping = aes(x = Inf, y = Inf, label = n_text),
-             data = newn,
-             hjust = 1.1,
-             vjust = 1.2,
-             parse = TRUE, family = "Palatino Linotype") +
-  #facet_wrap(vars(newexp), ncol = 1, dir = "v", scales = "free_y") +
-  facet_wrap(vars(newexp), nrow = 1, dir = "v", scales = "free_x") + 
-  scale_color_manual(
-    name = '',
-    breaks = c('Data', 'UVSD', 'Gumbel'),
-    values = c('Data' = 'black', 'UVSD' = "#0072B2", 'Gumbel' = "#E69F00"),
-    labels = c("Data", "Gaussian", expression(Gumbel[min]))
-  ) +
-  scale_shape_manual(
-    name = '',
-    breaks = c('Data', 'UVSD', 'Gumbel'),
-    values = c('Data' = 19, 'Gumbel' = 3, 'UVSD' = 5),
-    labels = c("Data", "Gaussian", expression(Gumbel[min]))
-  ) + 
-  theme(legend.title = NULL)  +
-  labs(x = expression("Old-Item Rank" ~ group("(", italic(i), ")")), 
-       y = "Pr(Old item rank)") +
-  #theme(axis.title.y = element_blank()) +
-  scale_linetype_manual(breaks = c("3", "4", "5"), 
-                        values = c(1,1,1), guide = NULL)+
-  coord_cartesian(ylim = ylim)
-
-# (p1b / p2b / p3b) +
-#   plot_layout(guides = 'collect', axes = "collect") 
-# #plot_annotation(tag_levels = list(c("A", "", "B")))
-# ggsave("rank-plot-3.pdf", width = 19, height = 18, units = "cm")
-
-
-
-p3
-ggsave("rank-plot-4b.pdf", width = 9, height = 18, units = "cm")
+# p3b <- plrd3 %>%
+#   ggplot(aes(x = rank, y = prob)) +
+#   geom_hline(aes(yintercept = guess), 
+#              colour = rgb(0.7, 0.7, 0.7, alpha = 0.4), data = plrd3mr,
+#              linetype = 2) +
+#   geom_line(aes(group = maxrank, linetype = maxrank), linewidth = lsize) +
+#   geom_point(size = psize, aes(shape = "Data", colour = "Data")) +
+#   geom_point(aes(y = gumbel, 
+#                  shape = "Gumbel", colour = "Gumbel"), size = psize, stroke = ssize) +
+#   geom_point(aes(y = uvsd, 
+#                  shape = "UVSD", colour = "UVSD"), size = psize, stroke = ssize) + 
+#   geom_label(mapping = aes(x = Inf, y = Inf, label = n_text),
+#              data = newn,
+#              hjust = 1.1,
+#              vjust = 1.2,
+#              parse = TRUE, family = "Palatino Linotype") +
+#   #facet_wrap(vars(newexp), ncol = 1, dir = "v", scales = "free_y") +
+#   facet_wrap(vars(newexp), nrow = 1, dir = "v", scales = "free_x") + 
+#   scale_color_manual(
+#     name = '',
+#     breaks = c('Data', 'UVSD', 'Gumbel'),
+#     values = c('Data' = 'black', 'UVSD' = "#0072B2", 'Gumbel' = "#E69F00"),
+#     labels = c("Data", "Gaussian", expression(Gumbel[min]))
+#   ) +
+#   scale_shape_manual(
+#     name = '',
+#     breaks = c('Data', 'UVSD', 'Gumbel'),
+#     values = c('Data' = 19, 'Gumbel' = 3, 'UVSD' = 5),
+#     labels = c("Data", "Gaussian", expression(Gumbel[min]))
+#   ) + 
+#   theme(legend.title = NULL)  +
+#   labs(x = expression("Old-Item Rank" ~ group("(", italic(i), ")")), 
+#        y = "Pr(Old item rank)") +
+#   #theme(axis.title.y = element_blank()) +
+#   scale_linetype_manual(breaks = c("3", "4", "5"), 
+#                         values = c(1,1,1), guide = NULL)+
+#   coord_cartesian(ylim = ylim)
+# 
+# # (p1b / p2b / p3b) +
+# #   plot_layout(guides = 'collect', axes = "collect") 
+# # #plot_annotation(tag_levels = list(c("A", "", "B")))
+# # ggsave("rank-plot-3.pdf", width = 19, height = 18, units = "cm")
+# 
+# 
+# 
+# p3
+# ggsave("rank-plot-4b.pdf", width = 9, height = 18, units = "cm")

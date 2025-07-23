@@ -186,7 +186,7 @@ theme_set(theme_bw(base_size = 12, base_family = "Palatino Linotype") +
 
 psize <- 3.5
 lsize <- 1.5
-stsize <- 0.5
+stsize <- 1.0
 plot_dat_2 %>%
   ggplot(aes(x =  fa_prob, y = r)) +
   geom_abline(slope = -1, intercept = 1, linetype = 2) +

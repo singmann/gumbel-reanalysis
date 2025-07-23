@@ -208,6 +208,7 @@ theme_set(theme_bw(base_size = 12, base_family = "Palatino Linotype") +
 
 psize <- 3.5
 lsize <- 1.5
+ssize <- 1.0
 plot_dat_2 %>%
   ggplot(aes(x =  fa, y = hit)) +
   geom_abline(slope = -1, intercept = 1, linetype = 2) +
@@ -219,9 +220,9 @@ plot_dat_2 %>%
   geom_line(aes(group = 1), linewidth = lsize) +
   geom_point(size = psize, aes(shape = "Data", colour = "Data")) +
   geom_point(aes(x = fa_gumbel, y = hit_gumbel, 
-                 shape = "Gumbel", colour = "Gumbel"), size = psize) +
+                 shape = "Gumbel", colour = "Gumbel"), size = psize, stroke = ssize) +
   geom_point(aes(x = fa_uvsd, y = hit_uvsd, 
-                 shape = "UVSD", colour = "UVSD"), size = psize) + 
+                 shape = "UVSD", colour = "UVSD"), size = psize, stroke = ssize) + 
   geom_label(mapping = aes(x = 0.75, y = 0.15, label = n_text), 
              data = bin_n, hjust = "center", vjust = "top", parse = TRUE,
              family = "Palatino Linotype") +
